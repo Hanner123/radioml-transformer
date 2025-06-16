@@ -1,0 +1,22 @@
+[
+    {
+        "batch_size": 1,
+        "throughput_images_per_s": 66845.60489877025,
+        "throughput_batches_per_s": 66845.60489877025
+    },
+    {
+        "batch_size": 2,
+        "throughput_images_per_s": 125840.95898495713,
+        "throughput_batches_per_s": 62920.47949247857
+    },
+    {
+        "batch_size": 4,
+        "throughput_images_per_s": 230085.15328442917,
+        "throughput_batches_per_s": 57521.28832110729
+    },
+    {
+        "batch_size": 8,
+        "throughput_images_per_s": 411575.8007705577,
+        "throughput_batches_per_s": 51446.975096319715
+    }
+]

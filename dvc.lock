@@ -99,15 +99,15 @@ stages:
     outs:
     - path: loss.yaml
       hash: md5
-      md5: fc00798d0a07b84455e5991d367782c0
-      size: 60
+      md5: bc1c8a47d1a101ca1e343b661115c883
+      size: 58
     - path: outputs/model.pt
       hash: md5
-      md5: cb6be1dba29036c615ae732480014359
-      size: 1005070
+      md5: 5bd23a1b2287e1ad5e3fa69b89e55d9c
+      size: 1022286
     - path: outputs/optimizer.pt
       hash: md5
-      md5: d11bdb07bfafffef139125923409d21a
+      md5: c0ad13d4b70f484dcab14de8c131512f
       size: 1540346
   eval:
     cmd: python -m eval
@@ -134,8 +134,8 @@ stages:
       size: 59858
     - path: outputs/model.pt
       hash: md5
-      md5: cb6be1dba29036c615ae732480014359
-      size: 1005070
+      md5: 5bd23a1b2287e1ad5e3fa69b89e55d9c
+      size: 1022286
     params:
       params.yaml:
         dataset:
@@ -192,16 +192,16 @@ stages:
     outs:
     - path: accuracy-per-snr.yaml
       hash: md5
-      md5: 1530b5dfa13726958698f652081ede8f
-      size: 708
+      md5: f73eaa78a739e24e6b2d2c10ab519ef0
+      size: 712
     - path: accuracy.yaml
       hash: md5
-      md5: 7c2ddce608c36a1679d8772ee5055ade
-      size: 29
+      md5: 6f44d2e55306deefe23acea975341bff
+      size: 30
     - path: classes.csv
       hash: md5
-      md5: d8c56143e2ffe7e0167dcee49733dba2
-      size: 944674
+      md5: 63edc935261236b3a0c87caa10f20fbc
+      size: 951420
   export:
     cmd: python -m export
     deps:
@@ -227,8 +227,8 @@ stages:
       size: 59858
     - path: outputs/model.pt
       hash: md5
-      md5: cb6be1dba29036c615ae732480014359
-      size: 1005070
+      md5: 5bd23a1b2287e1ad5e3fa69b89e55d9c
+      size: 1022286
     params:
       params.yaml:
         dataset:
@@ -286,11 +286,11 @@ stages:
       size: 8320
     - path: outputs/model.onnx
       hash: md5
-      md5: f73ca2351e4a3f1152dcd387a7c1405c
-      size: 860348
+      md5: 31a5d56bc578709f8c7806d7ddab0f16
+      size: 862020
     - path: outputs/out.npy
       hash: md5
-      md5: a9f1ab036efa219b8c87ede21877ff0b
+      md5: 6927212a42a95858b6e8ee0dec7ee514
       size: 3200
   build:
     cmd: bash run.sh '$FINN/run-docker.sh build_custom $(pwd)'

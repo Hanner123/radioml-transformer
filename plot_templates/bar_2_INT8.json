@@ -1,0 +1,19 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+    "title": "INT8 Throughput Batches/Sec",
+    "description": "Bar plot showing throughput batches vs batch size.",
+    "data": {"values": "<DVC_METRIC_DATA>"},
+    "mark": "bar",
+    "encoding": {
+      "x": {
+        "field": "batch_size",
+        "type": "ordinal",
+        "title": "Batch Size"
+      },
+      "y": {
+        "field": "throughput_batches_per_s",
+        "type": "quantitative",
+        "title": "Throughput (Batches/Sec)"
+      }
+    }
+  }

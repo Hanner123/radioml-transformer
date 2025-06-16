@@ -1,0 +1,18 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
+    "title": "Accuracy Comparison",
+    "data": {"values": "<DVC_METRIC_DATA>"},
+    "mark": "bar",
+    "encoding": {
+      "x": {
+        "field": "quantisation_type",
+        "type": "ordinal",
+        "title": "Quantisation"
+      },
+      "y": {
+        "field": "value",
+        "type": "quantitative",
+        "title": "Accuracy"
+      }
+    }
+  }

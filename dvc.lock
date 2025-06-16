@@ -418,3 +418,47 @@ stages:
       hash: md5
       md5: 5224a3f087dfdd2bec5b236e4205ac3c
       size: 22
+  nonquant:
+    cmd: python -m export_untrained
+    deps:
+    - path: export_untrained.py
+      hash: md5
+      md5: 888c50f1ccc48c61fd5e9c4884c26108
+      size: 3972
+    outs:
+    - path: outputs/model_nonquantized.onnx
+      hash: md5
+      md5: 31115226968caf795f71b44bf4073ba0
+      size: 466302
+  measure:
+    cmd: python -m measure_untrained
+    deps:
+    - path: export_untrained.py
+      hash: md5
+      md5: 888c50f1ccc48c61fd5e9c4884c26108
+      size: 3972
+    - path: measure_untrained.py
+      hash: md5
+      md5: cc75f48509d90be8bb24f9e6d5c0486c
+      size: 15575
+    - path: outputs/model_nonquantized.onnx
+      hash: md5
+      md5: 31115226968caf795f71b44bf4073ba0
+      size: 466302
+    outs:
+    - path: throughput/FP32/latency_results.json
+      hash: md5
+      md5: cef839ffe886b54beb55a899a24aa4ef
+      size: 3606
+    - path: throughput/FP32/latency_results_batch.json
+      hash: md5
+      md5: 7e2065054c26df59649b99978787b303
+      size: 3568
+    - path: throughput/FP32/throughput_results.json
+      hash: md5
+      md5: 58c804c2e41dcb5b34ec928f66511f9a
+      size: 1624
+    - path: throughput/FP32/throughput_results_2.json
+      hash: md5
+      md5: 58c804c2e41dcb5b34ec928f66511f9a
+      size: 1624

@@ -41,8 +41,6 @@ stages:
           title: "Validation Loss per Epoch"
           # Track via git, not dvc cache
           cache: false
-  export_unquant:
-
   # Stage running model evaluation after training to produce accuracy metrics
   eval:
     # Stage runs the evaluation script as the command
@@ -127,6 +125,42 @@ stages:
       # Sample input-output pair for verification
       - outputs/inp.npy
       - outputs/out.npy
+  # stage training and running a non-quantized model for speed up comparison
+  nonquant:
+    cmd: python -m export_untrained
+    deps:
+      - export_untrained.py
+    outs:
+      # The exported non-quantized model onnx graph file
+      - outputs/model_nonquantized.onnx
+  # stage measuring the speed of non-quantized model
+  measure:
+    cmd: python -m measure_untrained
+    deps:
+      - export_untrained.py
+      - outputs/model_nonquantized.onnx
+      - measure_untrained.py
+    plots:
+     -  throughput/FP32/throughput_results.json:
+         template: plot_templates/bar_2.json
+         x: batch_size
+         y: throughput_batches_per_s
+         cache: false
+     - throughput/FP32/throughput_results_2.json:
+         template: plot_templates/bar_1.json
+         x: batch_size
+         y: throughput_images_per_s
+         cache: false
+     - throughput/FP32/latency_results.json:
+         template: plot_templates/bar_3.json
+         x: batch_size
+         y: value
+         cache: false
+     - throughput/FP32/latency_results_batch.json:
+         template: plot_templates/bar_4.json
+         x: batch_size
+         y: value
+         cache: false
   # Stage running the finn dataflow accelerator build of the model
   build:
     # Command running a finn build of the model produced during export

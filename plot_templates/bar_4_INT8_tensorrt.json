@@ -1,0 +1,23 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "INT8 Latency per batch, Tensorrt",
+  "data": {"values": "<DVC_METRIC_DATA>"},
+  "mark": "bar",
+  "encoding": {
+    "x": {
+        "field": "batch_size",
+        "type": "ordinal",
+        "title": "Batch Size"
+      },
+    "y": {"aggregate": "sum", "field": "value", "title": "Latency with datatransfer per batch"},
+    "color": {
+      "field": "type",
+      "type": "nominal",
+      "scale": {
+        "domain": ["inteference", "synchronize", "datatransfer"],
+        "range": ["#e7ba52", "green", "#aec7e8"]
+      },
+      "title": "Latency type"
+    }
+  }
+}

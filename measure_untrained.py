@@ -167,8 +167,8 @@ def create_test_dataloader(data_path, batch_size, seq_len=32, emb_dim=64):
     from torch.utils.data import TensorDataset, DataLoader
 
     with h5py.File(data_path, "r") as f:
-        X = np.array(f["X"][:1000])  # Nur die ersten 1000 Datensätze
-        Y = np.array(f["Y"][:1000])
+        X = np.array(f["X"][:10000])  # Nur die ersten 1000 Datensätze
+        Y = np.array(f["Y"][:10000])
 
     # Reshape wie im Training!
     # Beispiel: von [samples, 1024, 2] zu [samples, 32, 64]
@@ -333,15 +333,24 @@ def run_inference(batch_size=1):
         total_predictions += total
     return correct_predictions, total_predictions
 
+# Montag:
+# richtiges modell verwenden/an passender Stelle exportieren - funkioniert nicht, schon in model.py sind nodes die tensorrt nicht versteht
+# erstmal eigenes, ähnliches modell verwenden. die outputs und inputs sind aber gleich
+# in pipeline einbauen
+# grafiken erstellen
 
+
+# Dienstag:
+# quantisiertes modell messen
 
 if __name__ == "__main__":
     onnx_model_path = "outputs/model_nonquantized.onnx"
+    # onnx_model_path = "outputs/model.onnx"
     # model: outputs/model_nonquantized.onnx
 
     data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"  # Pfad zu den Testdaten
     # data/GOLD_XYZ_OSC.0001_1024.hdf5
-    batch_sizes = [1,2,4,8]
+    batch_sizes = [1,2,4,8, 16, 32, 64, 128, 256, 512, 1024]  # Liste der Batchgrößen
 
 
     context=0

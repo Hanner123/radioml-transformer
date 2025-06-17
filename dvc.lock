@@ -471,8 +471,8 @@ stages:
       size: 3972
     - path: measure_untrained.py
       hash: md5
-      md5: 2a269aaf9747ff0afae5f9138fea0f81
-      size: 17822
+      md5: 87f6d738d75c982bdc699911d65a58ef
+      size: 17869
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
@@ -480,20 +480,20 @@ stages:
     outs:
     - path: throughput/FP32/latency_results.json
       hash: md5
-      md5: cd48ec9cc65afb5cceb5fde4c0d235b6
-      size: 3600
+      md5: a9071434634094e5f99138cc0eff23de
+      size: 3604
     - path: throughput/FP32/latency_results_batch.json
       hash: md5
-      md5: a07ac78dd165f51536e0852696f2f3ad
-      size: 3561
+      md5: 8f2d77025910ae696cc36fe33e043be1
+      size: 3558
     - path: throughput/FP32/throughput_results.json
       hash: md5
-      md5: 761a5beee53e7ff2ed5a1db4df4094b2
-      size: 1629
+      md5: e699ad5fac8915fcb78b3e9e02486e69
+      size: 1625
     - path: throughput/FP32/throughput_results_2.json
       hash: md5
-      md5: 761a5beee53e7ff2ed5a1db4df4094b2
-      size: 1629
+      md5: e699ad5fac8915fcb78b3e9e02486e69
+      size: 1625
   measure_16FP:
     cmd: FP16=1 python measure_untrained.py
     deps:
@@ -503,8 +503,8 @@ stages:
       size: 3972
     - path: measure_untrained.py
       hash: md5
-      md5: 2a269aaf9747ff0afae5f9138fea0f81
-      size: 17822
+      md5: 87f6d738d75c982bdc699911d65a58ef
+      size: 17869
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
@@ -512,17 +512,83 @@ stages:
     outs:
     - path: throughput/FP16/latency_results.json
       hash: md5
-      md5: b27661a65fdd4c6da2a71a00de4eed5b
-      size: 3599
+      md5: fc4f214959d722ae73c3aeb466420e5f
+      size: 3606
     - path: throughput/FP16/latency_results_batch.json
       hash: md5
-      md5: 4408cb43b596b75a95158d44965adc47
+      md5: efef792114b3a29c61c35ef7ab4bb65d
       size: 3562
     - path: throughput/FP16/throughput_results.json
       hash: md5
-      md5: 3b2ecc5689214d85c69632ef57ada562
-      size: 1625
+      md5: e5e4ffa528c8613d21d42efa2d1a127e
+      size: 1629
     - path: throughput/FP16/throughput_results_2.json
       hash: md5
-      md5: 3b2ecc5689214d85c69632ef57ada562
-      size: 1625
+      md5: e5e4ffa528c8613d21d42efa2d1a127e
+      size: 1629
+  quantize_tensorrt_INT8:
+    cmd: python quantize_tensorrt.py
+    deps:
+    - path: outputs/model_nonquantized.onnx
+      hash: md5
+      md5: 31115226968caf795f71b44bf4073ba0
+      size: 466302
+    - path: quantize_tensorrt.py
+      hash: md5
+      md5: db0bc25a41b0cd0a5bbd8d1439e20142
+      size: 4229
+    outs:
+    - path: outputs/engines
+      hash: md5
+      md5: f3b075fecf189dcd0d5e75f660915b6f.dir
+      size: 15738500
+      nfiles: 11
+  measure_INT8_tensorrt:
+    cmd: python measure_8bit.py
+    deps:
+    - path: measure_8bit.py
+      hash: md5
+      md5: 9c5140c7464ef7e9ff8fd4f62f5abb75
+      size: 15796
+    - path: outputs/engines
+      hash: md5
+      md5: f3b075fecf189dcd0d5e75f660915b6f.dir
+      size: 15738500
+      nfiles: 11
+    - path: plot_templates/bar_1_INT8_tensorrt.json
+      hash: md5
+      md5: 998b3034452bb8426e05b78d35466daa
+      size: 525
+    - path: plot_templates/bar_2_INT8_tensorrt.json
+      hash: md5
+      md5: 07c97dc8993669e7e12d788a5fe93364
+      size: 538
+    - path: plot_templates/bar_3_INT8_tensorrt.json
+      hash: md5
+      md5: 45f7b553dccd6e3b05ba9dd211e39177
+      size: 619
+    - path: plot_templates/bar_4_INT8_tensorrt.json
+      hash: md5
+      md5: a4a94b5e313ab0a49fc7a80412d7743f
+      size: 639
+    outs:
+    - path: eval_results/accuracy_INT8_tensorrt.json
+      hash: md5
+      md5: b824bc2c79154ef7c0015bc984a4977a
+      size: 70
+    - path: throughput/INT8_tensorrt/latency_results.json
+      hash: md5
+      md5: bf1df3e0f5722985829884aa1ac8ef8a
+      size: 3605
+    - path: throughput/INT8_tensorrt/latency_results_batch.json
+      hash: md5
+      md5: c4b39d1badbd2c0964f723fc538734e0
+      size: 3562
+    - path: throughput/INT8_tensorrt/throughput_results.json
+      hash: md5
+      md5: 2b066e0c3ac732a17d979c0012852bc2
+      size: 1627
+    - path: throughput/INT8_tensorrt/throughput_results_2.json
+      hash: md5
+      md5: 2b066e0c3ac732a17d979c0012852bc2
+      size: 1627

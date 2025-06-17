@@ -188,4 +188,45 @@ stages:
          x: batch_size
          y: value
          cache: false
+  quantize_tensorrt_INT8:
+    cmd: python quantize_tensorrt.py 
+    deps:
+      - quantize_tensorrt.py
+      - outputs/model_nonquantized.onnx
+    outs:
+      - outputs/engines
+  measure_INT8_tensorrt:
+    cmd: python measure_8bit.py 
+    deps:
+      - measure_8bit.py
+      - plot_templates/bar_1_INT8_tensorrt.json
+      - plot_templates/bar_2_INT8_tensorrt.json
+      - plot_templates/bar_3_INT8_tensorrt.json
+      - plot_templates/bar_4_INT8_tensorrt.json
+      - outputs/engines
+    outs:
+      - eval_results/accuracy_INT8_tensorrt.json
+    plots:
+     -  throughput/INT8_tensorrt/throughput_results.json:
+         template: plot_templates/bar_2_INT8_tensorrt.json
+         x: batch_size
+         y: throughput_batches_per_s
+         cache: false
+     - throughput/INT8_tensorrt/throughput_results_2.json:
+         template: plot_templates/bar_1_INT8_tensorrt.json
+         x: batch_size
+         y: throughput_images_per_s
+         cache: false
+     - throughput/INT8_tensorrt/latency_results.json:
+         template: plot_templates/bar_3_INT8_tensorrt.json
+         x: batch_size
+         y: value
+         cache: false
+     - throughput/INT8_tensorrt/latency_results_batch.json:
+         template: plot_templates/bar_4_INT8_tensorrt.json
+         x: batch_size
+         y: value
+         cache: false
+
+
   

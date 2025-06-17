@@ -74,7 +74,6 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
     total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
     iterations = 0  # Anzahl gemessener Batches
     # wie kann ich die input-sätze von dem Dataloader in den device_input buffer laden?
-    print("test_loader:", test_loader.batch_size, test_loader.dataset.tensors[0].shape, test_loader.dataset.tensors[1].shape)
     for xb, yb in test_loader:  
         start_time_datatransfer = time.time()  # Startzeit messen
         # print("xb:", xb.shape, xb.dtype)
@@ -130,52 +129,7 @@ def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_tim
     print(f"Throughput: {throughput_batches:.4f} Batches/Sekunde")
     print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde")
 
-def build_tensorrt_engine(onnx_model_path, test_loader, batch_size):
-    """
-    Erstellt und gibt die TensorRT-Engine und den Kontext zurück.
-    :param onnx_model_path: Pfad zur ONNX-Modell-Datei.
-    :param logger: TensorRT-Logger.
-    :return: TensorRT-Engine und Execution Context.
-    """
 
-    logger = trt.Logger(trt.Logger.WARNING)
-    builder = trt.Builder(logger)
-    network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
-    parser = trt.OnnxParser(network, logger)
-
-    # Parse the ONNX model
-    with open(onnx_model_path, 'rb') as f:
-        if not parser.parse(f.read()):
-            for i in range(parser.num_errors):
-                print(parser.get_error(i))
-            raise RuntimeError("ONNX Parsing failed")
-
-    config = builder.create_builder_config()
-    
-    config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 40)
-
-
-    # FP16 Quantisierung
-    if FP16 == True:
-        config.set_flag(trt.BuilderFlag.FP16)
-        
-
-    profile = builder.create_optimization_profile()
-
-    for i in range(network.num_inputs):
-        name = network.get_input(i).name
-        profile.set_shape(name, (1, 32, 64), (8, 32, 64), (1024, 32, 64))
-    config.add_optimization_profile(profile)
-
-    serialized_engine = builder.build_serialized_network(network, config)
-    if serialized_engine is None:
-        raise RuntimeError("Fehler beim Bauen der TensorRT-Engine: serialized_engine ist None.")
-
-    runtime = trt.Runtime(logger)
-    engine = runtime.deserialize_cuda_engine(serialized_engine)
-    context = engine.create_execution_context()
-
-    return engine, context
 
 
 
@@ -211,7 +165,7 @@ def create_test_dataloader(data_path, batch_size, seq_len=32, emb_dim=64):
     )
     return test_loader
 
-def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
+def calculate_latency_and_throughput(context, batch_sizes):
     """
     Berechnet die durchschnittliche Latenz und den Durchsatz (Bilder und Batches pro Sekunde) für verschiedene Batchgrößen.
     :param context: TensorRT-Execution-Context.
@@ -231,7 +185,15 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
 
     for batch_size in batch_sizes:
         test_loader = create_test_dataloader(data_path, batch_size) 
-        engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
+        engine_name = f"radioml_int8_{batch_size}.engine"
+        engine_path = Path(__file__).resolve().parent / "outputs" / "engines" / engine_name
+        logger = trt.Logger(trt.Logger.WARNING)
+        runtime = trt.Runtime(logger)
+
+        with open(engine_path, "rb") as f:
+            engine = runtime.deserialize_cuda_engine(f.read())
+        context = engine.create_execution_context()
+
         device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
 
         
@@ -325,8 +287,16 @@ def run_inference(batch_size=1):
     :param max_iterations: Maximalanzahl der Iterationen.
     :return: (Anzahl der korrekten Vorhersagen, Gesamtanzahl der Vorhersagen).
     """
+    engine_name = f"radioml_int8_32.engine"
+    engine_path = Path(__file__).resolve().parent / "outputs" / "engines" / engine_name
     test_loader = create_test_dataloader(data_path, batch_size)
-    engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
+
+    logger = trt.Logger(trt.Logger.WARNING)
+    runtime = trt.Runtime(logger)
+    with open(engine_path, "rb") as f:
+        engine = runtime.deserialize_cuda_engine(f.read())
+    context = engine.create_execution_context()
+
     device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size) # anpassen!!
     print("device_input:", device_input.shape, device_input.dtype)
     print("device_output:", device_output.shape, device_output.dtype)
@@ -374,12 +344,6 @@ def run_inference(batch_size=1):
 
 
 if __name__ == "__main__":
-    onnx_model_path = "outputs/model_nonquantized.onnx"
-    model = onnx.load("outputs/model_fp16.onnx")
-    if FP16:
-        model = float16.convert_float_to_float16(model)
-        print([i.name for i in model.graph.input])
-        print([o.name for o in model.graph.output])
 
     data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"  # Pfad zu den Testdaten
 
@@ -390,27 +354,20 @@ if __name__ == "__main__":
     correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
     print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
 
-    accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_FP16.json" if FP16 else Path(__file__).resolve().parent / "eval_results" /"accuracy_FP32.json"
-    quantisation_type = "FP16" if FP16 else "FP32"
     accuracy_result = {
-        "quantisation_type": quantisation_type,
+        "quantisation_type": "INT8 TensorRT",
         "value": correct_predictions / total_predictions
     }
+    accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_INT8_tensorrt.json"
     save_json(accuracy_result, accuracy_path)
     
 
 
-    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
-    if FP16:
-        throughput_results = Path(__file__).resolve().parent / "throughput" / "FP16" / "throughput_results.json"
-        throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP16"/ "throughput_results_2.json"
-        latency_results = Path(__file__).resolve().parent / "throughput" / "FP16"/ "latency_results.json"
-        latency_results_batch = Path(__file__).resolve().parent / "throughput" / "FP16"/ "latency_results_batch.json"
-    else:
-        throughput_results = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results.json"
-        throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results_2.json"
-        latency_results = Path(__file__).resolve().parent / "throughput" / "FP32"/ "latency_results.json"
-        latency_results_batch = Path(__file__).resolve().parent / "throughput" / "FP32"/ "latency_results_batch.json"
+    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes)
+    throughput_results = Path(__file__).resolve().parent / "throughput" / "INT8_tensorrt" /"throughput_results.json"
+    throughput_results2 = Path(__file__).resolve().parent / "throughput"/ "INT8_tensorrt" / "throughput_results_2.json"
+    latency_results = Path(__file__).resolve().parent / "throughput" / "INT8_tensorrt"/ "latency_results.json"
+    latency_results_batch = Path(__file__).resolve().parent / "throughput" / "INT8_tensorrt"/ "latency_results_batch.json"
     save_json(throughput_log, throughput_results)
     save_json(throughput_log, throughput_results2)
     save_json(latency_log, latency_results)

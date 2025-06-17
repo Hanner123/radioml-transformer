@@ -336,12 +336,12 @@ def run_inference(batch_size=1):
 # Montag:
 # richtiges modell verwenden/an passender Stelle exportieren - funkioniert nicht, schon in model.py sind nodes die tensorrt nicht versteht
 # erstmal eigenes, ähnliches modell verwenden. die outputs und inputs sind aber gleich
-# in pipeline einbauen
-# grafiken erstellen
+# in pipeline einbauen - gemacht
+# grafiken erstellen - gemacht
 
 
 # Dienstag:
-# quantisiertes modell messen
+# quantisiertes modell messen, testen, ähnlicheres modell verwenden
 
 if __name__ == "__main__":
     onnx_model_path = "outputs/model_nonquantized.onnx"
@@ -356,20 +356,28 @@ if __name__ == "__main__":
     context=0
     correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
     print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
-    
-    accuracy_path = "eval_results/accuracy_FP32.json"
+
+    accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_FP16.json" if FP16 else Path(__file__).resolve().parent / "eval_results" /"accuracy_FP32.json"
+    quantisation_type = "FP16" if FP16 else "FP32"
     accuracy_result = {
-        "quantisation_type": "fp32",
+        "quantisation_type": quantisation_type,
         "value": correct_predictions / total_predictions
     }
     save_json(accuracy_result, accuracy_path)
+    
 
 
     throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
-    throughput_results = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results.json"
-    throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results_2.json"
-    latency_results = Path(__file__).resolve().parent / "throughput" / "FP32"/ "latency_results.json"
-    latency_results_batch = Path(__file__).resolve().parent / "throughput" / "FP32"/ "latency_results_batch.json"
+    if FP16:
+        throughput_results = Path(__file__).resolve().parent / "throughput" / "FP16" / "throughput_results.json"
+        throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP16"/ "throughput_results_2.json"
+        latency_results = Path(__file__).resolve().parent / "throughput" / "FP16"/ "latency_results.json"
+        latency_results_batch = Path(__file__).resolve().parent / "throughput" / "FP16"/ "latency_results_batch.json"
+    else:
+        throughput_results = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results.json"
+        throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results_2.json"
+        latency_results = Path(__file__).resolve().parent / "throughput" / "FP32"/ "latency_results.json"
+        latency_results_batch = Path(__file__).resolve().parent / "throughput" / "FP32"/ "latency_results_batch.json"
     save_json(throughput_log, throughput_results)
     save_json(throughput_log, throughput_results2)
     save_json(latency_log, latency_results)

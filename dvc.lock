@@ -462,3 +462,67 @@ stages:
       hash: md5
       md5: 58c804c2e41dcb5b34ec928f66511f9a
       size: 1624
+  measure_32FP:
+    cmd: FP16=0 python measure_untrained.py
+    deps:
+    - path: export_untrained.py
+      hash: md5
+      md5: 888c50f1ccc48c61fd5e9c4884c26108
+      size: 3972
+    - path: measure_untrained.py
+      hash: md5
+      md5: 13f93f79326a2e2785a9fb53c5e240e2
+      size: 16309
+    - path: outputs/model_nonquantized.onnx
+      hash: md5
+      md5: 31115226968caf795f71b44bf4073ba0
+      size: 466302
+    outs:
+    - path: throughput/FP32/latency_results.json
+      hash: md5
+      md5: 6ed4164ca1be427ee5e56e3948e7818b
+      size: 3606
+    - path: throughput/FP32/latency_results_batch.json
+      hash: md5
+      md5: 1be6e87314fd424b55047bcc7a59a2a3
+      size: 3568
+    - path: throughput/FP32/throughput_results.json
+      hash: md5
+      md5: f386bb269844a1cbb55c833e9d2a2df7
+      size: 1625
+    - path: throughput/FP32/throughput_results_2.json
+      hash: md5
+      md5: f386bb269844a1cbb55c833e9d2a2df7
+      size: 1625
+  measure_16FP:
+    cmd: FP16=1 python measure_untrained.py
+    deps:
+    - path: export_untrained.py
+      hash: md5
+      md5: 888c50f1ccc48c61fd5e9c4884c26108
+      size: 3972
+    - path: measure_untrained.py
+      hash: md5
+      md5: 13f93f79326a2e2785a9fb53c5e240e2
+      size: 16309
+    - path: outputs/model_nonquantized.onnx
+      hash: md5
+      md5: 31115226968caf795f71b44bf4073ba0
+      size: 466302
+    outs:
+    - path: throughput/FP16/latency_results.json
+      hash: md5
+      md5: 69410e9dd94b5a346b4c7025fbf7977b
+      size: 3604
+    - path: throughput/FP16/latency_results_batch.json
+      hash: md5
+      md5: 4aab606495c15797f3e17786325f5b3c
+      size: 3564
+    - path: throughput/FP16/throughput_results.json
+      hash: md5
+      md5: 6c6bb56f230ab010c8f9abe1c08245d0
+      size: 1628
+    - path: throughput/FP16/throughput_results_2.json
+      hash: md5
+      md5: 6c6bb56f230ab010c8f9abe1c08245d0
+      size: 1628

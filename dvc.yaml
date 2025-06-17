@@ -134,8 +134,8 @@ stages:
       # The exported non-quantized model onnx graph file
       - outputs/model_nonquantized.onnx
   # stage measuring the speed of non-quantized model
-  measure:
-    cmd: python -m measure_untrained
+  measure_32FP:
+    cmd: FP16=0 python measure_untrained.py
     deps:
       - export_untrained.py
       - outputs/model_nonquantized.onnx
@@ -158,6 +158,33 @@ stages:
          cache: false
      - throughput/FP32/latency_results_batch.json:
          template: plot_templates/bar_4.json
+         x: batch_size
+         y: value
+         cache: false
+  measure_16FP:
+    cmd: FP16=1 python measure_untrained.py
+    deps:
+      - export_untrained.py
+      - outputs/model_nonquantized.onnx
+      - measure_untrained.py
+    plots:
+     -  throughput/FP16/throughput_results.json:
+         template: plot_templates/bar_2_FP16.json
+         x: batch_size
+         y: throughput_batches_per_s
+         cache: false
+     - throughput/FP16/throughput_results_2.json:
+         template: plot_templates/bar_1_FP16.json
+         x: batch_size
+         y: throughput_images_per_s
+         cache: false
+     - throughput/FP16/latency_results.json:
+         template: plot_templates/bar_3_FP16.json
+         x: batch_size
+         y: value
+         cache: false
+     - throughput/FP16/latency_results_batch.json:
+         template: plot_templates/bar_4_FP16.json
          x: batch_size
          y: value
          cache: false

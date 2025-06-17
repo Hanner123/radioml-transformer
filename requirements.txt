@@ -12,3 +12,6 @@ dvc[webdav]~=3.55.2
 tqdm~=4.66.5
 h5py~=3.12.1
 scikit-learn~=1.5.2
+tensorrt==10.10.0.31
+pycuda
+onnxconverter_common

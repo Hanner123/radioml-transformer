@@ -13,8 +13,15 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 import os
 import yaml
+from onnxconverter_common import float16
 # tensorrt, datasets(hugging face), pycuda
 FP16 = os.environ.get("FP16", "0") == "1"
+if FP16:
+    dtype = torch.float16
+    print("FP16 enabled")
+else:
+    dtype = torch.float32
+    print("FP32")
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
@@ -67,17 +74,29 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
     total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
     iterations = 0  # Anzahl gemessener Batches
     # wie kann ich die input-sätze von dem Dataloader in den device_input buffer laden?
+    print("test_loader:", test_loader.batch_size, test_loader.dataset.tensors[0].shape, test_loader.dataset.tensors[1].shape)
     for xb, yb in test_loader:  
         start_time_datatransfer = time.time()  # Startzeit messen
+        # print("xb:", xb.shape, xb.dtype)
+        # print("device_input:", device_input.shape, device_input.dtype)
+        # Buffer-Addresses und Shape JEDES MAL neu setzen!
 
-        device_input.copy_(xb.to(torch.float32))
+
+        device_input.copy_(xb.to(dtype))
+
+        context.set_tensor_address("input", device_input.data_ptr())
+        context.set_tensor_address("output", device_output.data_ptr())
+        context.set_input_shape("input", device_input.shape)
 
         start_time_synchronize = time.time()  # Startzeit messen
         torch_stream.synchronize()  
 
         start_time_inteference = time.time()  # Startzeit messen
-        with torch.cuda.stream(torch_stream):
-            context.execute_async_v3(stream_ptr)  # TensorRT-Inferenz durchführen
+        try:
+            with torch.cuda.stream(torch_stream):
+                context.execute_async_v3(stream_ptr)
+        except Exception as e:
+            print("TensorRT Error:", e)
         torch_stream.synchronize()  # GPU-Synchronisation nach Inferenz
         end_time = time.time()
 
@@ -94,7 +113,6 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
         iterations += 1
         
         # labels auswerten - zeit messen, bar plots
-
     average_latency = (total_time / iterations) * 1000  # In Millisekunden
     average_latency_synchronize = (total_time_synchronize / iterations) * 1000  # In Millisekunden
     average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000  # In Millisekunden
@@ -181,7 +199,7 @@ def create_test_dataloader(data_path, batch_size, seq_len=32, emb_dim=64):
         Y = np.argmax(Y, axis=1)
     Y = np.tile(Y[:, None], (1, seq_len))   # [samples', seq_len]
 
-    X = torch.tensor(X, dtype=torch.float32)
+    X = torch.tensor(X, dtype=dtype) #dtype
     Y = torch.tensor(Y, dtype=torch.long)
     test_dataset = TensorDataset(X, Y)
     test_loader = DataLoader(
@@ -273,7 +291,7 @@ def test_data(context, batch_size):
     output_name = "output"  # Name wie im ONNX-Modell
     input_shape = (batch_size, 32, 64)
     output_shape = (batch_size, 32, 24)
-    device_input = torch.empty(input_shape, dtype=torch.float32, device='cuda')
+    device_input = torch.empty(input_shape, dtype=dtype, device='cuda')
     device_output = torch.empty(output_shape, dtype=torch.float32, device='cuda')
     torch_stream = torch.cuda.Stream()
     stream_ptr = torch_stream.cuda_stream
@@ -310,20 +328,29 @@ def run_inference(batch_size=1):
     test_loader = create_test_dataloader(data_path, batch_size)
     engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
     device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size) # anpassen!!
+    print("device_input:", device_input.shape, device_input.dtype)
+    print("device_output:", device_output.shape, device_output.dtype)
 
     total_predictions = 0
     correct_predictions = 0
 
+
     for xb, yb in test_loader:
 
-        device_input.copy_(xb.to(torch.float32))
+        device_input.copy_(xb.to(dtype))
 
+        context.set_tensor_address("input", device_input.data_ptr())
+        context.set_tensor_address("output", device_output.data_ptr())
+        context.set_input_shape("input", device_input.shape)
         torch_stream.synchronize()
         
-        with torch.cuda.stream(torch_stream): # nicht für mehr als 64 Bildern möglich
-            context.execute_async_v3(stream_ptr)
+        try:
+            with torch.cuda.stream(torch_stream):
+                context.execute_async_v3(stream_ptr)
+        except Exception as e:
+            print("TensorRT Error:", e)
         torch_stream.synchronize()
-
+        torch.cuda.synchronize()  # Warten auf Abschluss der Inferenz
         output = device_output.cpu().numpy()
 
         pred = output.argmax(axis=-1)  # [batch, seq_len]
@@ -331,6 +358,7 @@ def run_inference(batch_size=1):
         total = np.prod(yb.shape)
         correct_predictions += correct
         total_predictions += total
+    # del device_input, device_output, stream_ptr, torch_stream, engine, context
     return correct_predictions, total_predictions
 
 # Montag:
@@ -341,15 +369,20 @@ def run_inference(batch_size=1):
 
 
 # Dienstag:
+# FP 16 testen - gemacht, aber kein unterschied zu FP 32 (etwas schlechter), [06/17/2025-12:29:42] [TRT] [E] IExecutionContext::enqueueV3: Error Code 1: Cuda Runtime (invalid resource handle)
 # quantisiertes modell messen, testen, ähnlicheres modell verwenden
+
 
 if __name__ == "__main__":
     onnx_model_path = "outputs/model_nonquantized.onnx"
-    # onnx_model_path = "outputs/model.onnx"
-    # model: outputs/model_nonquantized.onnx
+    model = onnx.load("outputs/model_fp16.onnx")
+    if FP16:
+        model = float16.convert_float_to_float16(model)
+        print([i.name for i in model.graph.input])
+        print([o.name for o in model.graph.output])
 
     data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"  # Pfad zu den Testdaten
-    # data/GOLD_XYZ_OSC.0001_1024.hdf5
+
     batch_sizes = [1,2,4,8, 16, 32, 64, 128, 256, 512, 1024]  # Liste der Batchgrößen
 
 

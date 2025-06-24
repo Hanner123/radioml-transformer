@@ -384,7 +384,7 @@ if __name__ == "__main__":
 
     data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"  # Pfad zu den Testdaten
 
-    batch_sizes = [1,2,4,8, 16, 32, 64, 128, 256, 512, 1024]  # Liste der Batchgrößen
+    batch_sizes = [64, 128, 256, 512, 1024]  # Liste der Batchgrößen
 
 
     context=0

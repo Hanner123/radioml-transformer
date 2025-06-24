@@ -376,7 +376,7 @@ def run_inference(batch_size=1):
 if __name__ == "__main__":
     onnx_model_path = "outputs/model_nonquantized.onnx"
     onnx_model_path = "outputs/urspruengliches_model.onnx"
-    model = onnx.load("outputs/model_fp16.onnx")
+    model = onnx.load("outputs/urspruengliches_model.onnx") # model_fp16
     if FP16:
         model = float16.convert_float_to_float16(model)
         print([i.name for i in model.graph.input])

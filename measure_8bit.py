@@ -15,13 +15,7 @@ import os
 import yaml
 from onnxconverter_common import float16
 # tensorrt, datasets(hugging face), pycuda
-FP16 = os.environ.get("FP16", "0") == "1"
-if FP16:
-    dtype = torch.float16
-    print("FP16 enabled")
-else:
-    dtype = torch.float32
-    print("FP32")
+
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.

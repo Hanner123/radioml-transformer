@@ -543,25 +543,25 @@ stages:
       size: 466302
     - path: quantize_tensorrt.py
       hash: md5
-      md5: db0bc25a41b0cd0a5bbd8d1439e20142
-      size: 4229
+      md5: c9fe3600e2a382c8252ff1fa2601ffab
+      size: 4330
     outs:
     - path: outputs/engines
       hash: md5
-      md5: f3b075fecf189dcd0d5e75f660915b6f.dir
-      size: 15738500
+      md5: 62538d607e6b9c7487f6028f813fb0ab.dir
+      size: 55471836
       nfiles: 11
   measure_INT8_tensorrt:
     cmd: python measure_8bit.py
     deps:
     - path: measure_8bit.py
       hash: md5
-      md5: 9c5140c7464ef7e9ff8fd4f62f5abb75
-      size: 15796
+      md5: c7aa2b8c425b8cf0797c437e01ac0fb0
+      size: 15644
     - path: outputs/engines
       hash: md5
-      md5: f3b075fecf189dcd0d5e75f660915b6f.dir
-      size: 15738500
+      md5: 62538d607e6b9c7487f6028f813fb0ab.dir
+      size: 55471836
       nfiles: 11
     - path: plot_templates/bar_1_INT8_tensorrt.json
       hash: md5
@@ -582,21 +582,21 @@ stages:
     outs:
     - path: eval_results/accuracy_INT8_tensorrt.json
       hash: md5
-      md5: b824bc2c79154ef7c0015bc984a4977a
+      md5: 231bb1c0e244b2ae69e30e46ae4b98df
       size: 70
     - path: throughput/INT8_tensorrt/latency_results.json
       hash: md5
-      md5: bf1df3e0f5722985829884aa1ac8ef8a
-      size: 3605
+      md5: 5dc66096095f8bee509d23cd14f98599
+      size: 3597
     - path: throughput/INT8_tensorrt/latency_results_batch.json
       hash: md5
-      md5: c4b39d1badbd2c0964f723fc538734e0
-      size: 3562
+      md5: 16fbccd14d7648f7a9f51903600973e2
+      size: 3557
     - path: throughput/INT8_tensorrt/throughput_results.json
       hash: md5
-      md5: 2b066e0c3ac732a17d979c0012852bc2
-      size: 1627
+      md5: b13954724d6ffe2f029b43fb3c04bef1
+      size: 1634
     - path: throughput/INT8_tensorrt/throughput_results_2.json
       hash: md5
-      md5: 2b066e0c3ac732a17d979c0012852bc2
-      size: 1627
+      md5: b13954724d6ffe2f029b43fb3c04bef1
+      size: 1634

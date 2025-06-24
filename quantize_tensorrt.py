@@ -100,6 +100,7 @@ if __name__ == "__main__":
 
     for batch_size in batch_sizes:
         onnx_model_path = Path(__file__).resolve().parent / "outputs" / "model_nonquantized.onnx"
+        onnx_model_path = Path(__file__).resolve().parent / "outputs" / "urspruengliches_model.onnx"
         data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"
 
         calib_loader = create_calib_dataloader(data_path, batch_size)

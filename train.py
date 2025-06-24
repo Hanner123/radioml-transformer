@@ -144,3 +144,19 @@ if __name__ == "__main__":
     with open("loss.yaml", "w") as file:
         # Dump the training log dictionary as YAML into the file
         yaml.safe_dump(log, file)
+
+    dummy_input = torch.randn(params["train"]["batch_size"], 32, 64, device=next(model.parameters()).device)
+
+    onnx_path = "outputs/urspruengliches_model.onnx"
+    torch.onnx.export(
+        model,
+        dummy_input,
+        onnx_path,
+        export_params=True,
+        opset_version=17,
+        do_constant_folding=True,
+        input_names=['input'],
+        output_names=['output'],
+        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+    )
+    print(f"Modell als ONNX exportiert: {onnx_path}")

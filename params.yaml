@@ -20,7 +20,7 @@ model:
   mlp_dim: 256
   # Type of normalization layer to use in the transformer blocks
   #   Options are: layer-norm, batch-norm and none
-  norm: batch-norm
+  norm: layer-norm # mit batch norm kein onnx export möglich
   # Type of positional encoding to use at the input
   #   Options are: none, sinusoidal, binary, learned
   positional_encoding: binary

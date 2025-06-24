@@ -29,8 +29,8 @@ stages:
       size: 1616
     - path: train.py
       hash: md5
-      md5: 69487857c2eb4e3a96c5dc39c2aec6fc
-      size: 6487
+      md5: 95837fd5b1d21eb13ea6fe52b0a4296c
+      size: 7020
     params:
       params.yaml:
         dataset:
@@ -70,7 +70,7 @@ stages:
           bias: true
           emb_dim: 64
           mlp_dim: 256
-          norm: batch-norm
+          norm: layer-norm
           positional_encoding: binary
           dropout: 0.0
           bits: 4
@@ -99,16 +99,20 @@ stages:
     outs:
     - path: loss.yaml
       hash: md5
-      md5: bc1c8a47d1a101ca1e343b661115c883
-      size: 58
+      md5: 084e43d9ce8d3042df80cc30aa9a72d6
+      size: 61
     - path: outputs/model.pt
       hash: md5
-      md5: 5bd23a1b2287e1ad5e3fa69b89e55d9c
-      size: 1022286
+      md5: edb2afea2892496e3a95f4d84729ed01
+      size: 1010499
     - path: outputs/optimizer.pt
       hash: md5
-      md5: c0ad13d4b70f484dcab14de8c131512f
+      md5: 610ab09f6b057f0c9711be5212789413
       size: 1540346
+    - path: outputs/urspruengliches_model.onnx
+      hash: md5
+      md5: bb87f6156b6072f32f7621ee6213fa4a
+      size: 2186685
   eval:
     cmd: python -m eval
     deps:
@@ -134,8 +138,8 @@ stages:
       size: 59858
     - path: outputs/model.pt
       hash: md5
-      md5: 5bd23a1b2287e1ad5e3fa69b89e55d9c
-      size: 1022286
+      md5: edb2afea2892496e3a95f4d84729ed01
+      size: 1010499
     params:
       params.yaml:
         dataset:
@@ -181,7 +185,7 @@ stages:
           bias: true
           emb_dim: 64
           mlp_dim: 256
-          norm: batch-norm
+          norm: layer-norm
           positional_encoding: binary
           dropout: 0.0
           bits: 4
@@ -192,16 +196,16 @@ stages:
     outs:
     - path: accuracy-per-snr.yaml
       hash: md5
-      md5: f73eaa78a739e24e6b2d2c10ab519ef0
-      size: 712
+      md5: 8fb6b191d169e9b5e4651c6d01f0f56c
+      size: 711
     - path: accuracy.yaml
       hash: md5
-      md5: 6f44d2e55306deefe23acea975341bff
-      size: 30
+      md5: 4a0872f12724cf42c0de3f70029b2b29
+      size: 29
     - path: classes.csv
       hash: md5
-      md5: 63edc935261236b3a0c87caa10f20fbc
-      size: 951420
+      md5: 218c57cc849be79f47a860016475f083
+      size: 940971
   export:
     cmd: python -m export
     deps:
@@ -227,8 +231,8 @@ stages:
       size: 59858
     - path: outputs/model.pt
       hash: md5
-      md5: 5bd23a1b2287e1ad5e3fa69b89e55d9c
-      size: 1022286
+      md5: edb2afea2892496e3a95f4d84729ed01
+      size: 1010499
     params:
       params.yaml:
         dataset:
@@ -271,7 +275,7 @@ stages:
           bias: true
           emb_dim: 64
           mlp_dim: 256
-          norm: batch-norm
+          norm: layer-norm
           positional_encoding: binary
           dropout: 0.0
           bits: 4
@@ -286,11 +290,11 @@ stages:
       size: 8320
     - path: outputs/model.onnx
       hash: md5
-      md5: 31a5d56bc578709f8c7806d7ddab0f16
-      size: 862020
+      md5: 70b9783428ee54fbf237b3ef7708430a
+      size: 856142
     - path: outputs/out.npy
       hash: md5
-      md5: 6927212a42a95858b6e8ee0dec7ee514
+      md5: 2f2ebbde844703baa9ffb23a4b1e3138
       size: 3200
   build:
     cmd: bash run.sh '$FINN/run-docker.sh build_custom $(pwd)'
@@ -471,29 +475,33 @@ stages:
       size: 3972
     - path: measure_untrained.py
       hash: md5
-      md5: 87f6d738d75c982bdc699911d65a58ef
-      size: 17869
+      md5: e79be7398d5bf39e2eb58e3e6c1ccd43
+      size: 17930
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
       size: 466302
+    - path: outputs/urspruengliches_model.onnx
+      hash: md5
+      md5: bb87f6156b6072f32f7621ee6213fa4a
+      size: 2186685
     outs:
     - path: throughput/FP32/latency_results.json
       hash: md5
-      md5: a9071434634094e5f99138cc0eff23de
-      size: 3604
+      md5: 65d02a0e4e5cf80078de0e3592700045
+      size: 3600
     - path: throughput/FP32/latency_results_batch.json
       hash: md5
-      md5: 8f2d77025910ae696cc36fe33e043be1
-      size: 3558
+      md5: f019e9d5c4b1b9117d97b57f026c2c5b
+      size: 3564
     - path: throughput/FP32/throughput_results.json
       hash: md5
-      md5: e699ad5fac8915fcb78b3e9e02486e69
-      size: 1625
+      md5: 01a1db5f58ec7fa5bf52a4c0f53f5b39
+      size: 1627
     - path: throughput/FP32/throughput_results_2.json
       hash: md5
-      md5: e699ad5fac8915fcb78b3e9e02486e69
-      size: 1625
+      md5: 01a1db5f58ec7fa5bf52a4c0f53f5b39
+      size: 1627
   measure_16FP:
     cmd: FP16=1 python measure_untrained.py
     deps:
@@ -503,8 +511,8 @@ stages:
       size: 3972
     - path: measure_untrained.py
       hash: md5
-      md5: 87f6d738d75c982bdc699911d65a58ef
-      size: 17869
+      md5: e79be7398d5bf39e2eb58e3e6c1ccd43
+      size: 17930
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
@@ -512,20 +520,20 @@ stages:
     outs:
     - path: throughput/FP16/latency_results.json
       hash: md5
-      md5: fc4f214959d722ae73c3aeb466420e5f
-      size: 3606
+      md5: dd41634ad8389086d95ae0ac53531772
+      size: 3598
     - path: throughput/FP16/latency_results_batch.json
       hash: md5
-      md5: efef792114b3a29c61c35ef7ab4bb65d
+      md5: e22b27a04e21a3274f0a83267144221e
       size: 3562
     - path: throughput/FP16/throughput_results.json
       hash: md5
-      md5: e5e4ffa528c8613d21d42efa2d1a127e
-      size: 1629
+      md5: feaf4d7f1c9bbd8d8aa57c6af0c30e20
+      size: 1628
     - path: throughput/FP16/throughput_results_2.json
       hash: md5
-      md5: e5e4ffa528c8613d21d42efa2d1a127e
-      size: 1629
+      md5: feaf4d7f1c9bbd8d8aa57c6af0c30e20
+      size: 1628
   quantize_tensorrt_INT8:
     cmd: python quantize_tensorrt.py
     deps:

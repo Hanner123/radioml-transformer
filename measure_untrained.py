@@ -74,7 +74,7 @@ def measure_latency(context, test_loader, device_input, device_output, stream_pt
     total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
     iterations = 0  # Anzahl gemessener Batches
     # wie kann ich die input-sätze von dem Dataloader in den device_input buffer laden?
-    print("test_loader:", test_loader.batch_size, test_loader.dataset.tensors[0].shape, test_loader.dataset.tensors[1].shape)
+    # print("test_loader:", test_loader.batch_size, test_loader.dataset.tensors[0].shape, test_loader.dataset.tensors[1].shape)
     for xb, yb in test_loader:  
         start_time_datatransfer = time.time()  # Startzeit messen
         # print("xb:", xb.shape, xb.dtype)
@@ -375,6 +375,7 @@ def run_inference(batch_size=1):
 
 if __name__ == "__main__":
     onnx_model_path = "outputs/model_nonquantized.onnx"
+    onnx_model_path = "outputs/urspruengliches_model.onnx"
     model = onnx.load("outputs/model_fp16.onnx")
     if FP16:
         model = float16.convert_float_to_float16(model)

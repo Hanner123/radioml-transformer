@@ -43,6 +43,22 @@ def export(model, dataset, **kwargs):  # noqa: Shadows model
     # Export the model graph to QONNX
     export_qonnx(model, (inp,), "outputs/model.onnx", **kwargs)
 
+        # onnx_path = "outputs/urspruengliches_model.onnx"
+    onnx_path = "outputs/model_measuring.onnx"
+    torch.onnx.export(
+        model,
+        (inp,),
+        onnx_path,
+        export_params=True,
+        opset_version=17,
+        do_constant_folding=True,
+        input_names=['input'],
+        output_names=['output'],
+        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+    )
+    print(f"Modell als ONNX exportiert: {onnx_path}")
+    # normales onnx zusätzlich oder als parameter option export format
+
 
 # Check whether a layer is a normalization layer of some supported type
 def is_norm_layer(module):
@@ -102,3 +118,9 @@ if __name__ == "__main__":
     model = patch_non_affine_norms(model)
     # Pass the model and the export configuration to the evaluation loop
     export(model, dataset=params["dataset"], **params["export"])
+
+
+# Aufgaben: 
+# Export mit batch-norm
+# plots vereinheitlichen
+# code vereinheitlichen, was sind die unterschiede, wo müssen Änderungen bei anderen Modellen gemacht werden?? - Readme erstellen

@@ -31,7 +31,6 @@ stages:
       - outputs/model.pt
       # The optimizer state after training
       - outputs/optimizer.pt
-      - outputs/urspruengliches_model.onnx
     # Plots produced by this stage
     plots:
       # Curves of training and validation loss per epoch
@@ -123,6 +122,7 @@ stages:
     outs:
       # The exported model onnx graph file
       - outputs/model.onnx
+      - outputs/model_measuring.onnx
       # Sample input-output pair for verification
       - outputs/inp.npy
       - outputs/out.npy
@@ -140,7 +140,7 @@ stages:
     deps:
       - export_untrained.py
       - outputs/model_nonquantized.onnx
-      - outputs/urspruengliches_model.onnx
+      - outputs/model_measuring.onnx
       - measure_untrained.py
     plots:
      -  throughput/FP32/throughput_results.json:

@@ -335,7 +335,7 @@ def run_inference(batch_size=1):
 # Dienstag:
 # FP 16 testen - gemacht, aber kein unterschied zu FP 32 (etwas schlechter), [06/17/2025-12:29:42] [TRT] [E] IExecutionContext::enqueueV3: Error Code 1: Cuda Runtime (invalid resource handle)
 # quantisiertes modell messen, testen, ähnlicheres modell verwenden
-
+dtype = torch.float32
 
 if __name__ == "__main__":
 

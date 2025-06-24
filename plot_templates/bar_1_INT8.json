@@ -1,6 +1,6 @@
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
-    "title": "INT8 Throughput Lines/Sec",
+    "title": "INT8 Throughput sample/Sec",
     "description": "Bar plot showing throughput vs batch size.",
     "data": {"values": "<DVC_METRIC_DATA>"},
     "mark": "bar",
@@ -13,7 +13,7 @@
       "y": {
         "field": "throughput_images_per_s",
         "type": "quantitative",
-        "title": "Throughput (Lines/Sec)"
+        "title": "Throughput (sample/Sec)"
       }
     }
   }

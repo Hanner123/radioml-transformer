@@ -1,6 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "title": "FP32 Latency per line",
+  "title": "FP32 Latency per sample",
   "data": {"values": "<DVC_METRIC_DATA>"},
   "mark": "bar",
   "encoding": {
@@ -9,7 +9,7 @@
         "type": "ordinal",
         "title": "Batch Size"
       },
-    "y": {"aggregate": "sum", "field": "value", "title": "Latency per line"},
+    "y": {"aggregate": "sum", "field": "value", "title": "Latency per sample"},
     "color": {
       "field": "type",
       "type": "nominal",

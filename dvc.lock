@@ -475,8 +475,8 @@ stages:
       size: 3972
     - path: measure_untrained.py
       hash: md5
-      md5: 36fad7169940088f0a40232c22475227
-      size: 17937
+      md5: 3ce216e15dad817ce885ef68a6d34241
+      size: 17958
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
@@ -488,20 +488,20 @@ stages:
     outs:
     - path: throughput/FP32/latency_results.json
       hash: md5
-      md5: 90de3b16a6b1395fa219e5642aadd722
-      size: 1656
+      md5: dc8db2d51812d568d9013a1f3b01baf1
+      size: 3597
     - path: throughput/FP32/latency_results_batch.json
       hash: md5
-      md5: 3564c517c0b91324cb612ed1a2074120
-      size: 1629
+      md5: c625b53ae23eb9c387b187b60b493906
+      size: 3560
     - path: throughput/FP32/throughput_results.json
       hash: md5
-      md5: a96d114a481605d394a3328c238ca815
-      size: 748
+      md5: f89eaab42527072c2425fa9673534b38
+      size: 1633
     - path: throughput/FP32/throughput_results_2.json
       hash: md5
-      md5: a96d114a481605d394a3328c238ca815
-      size: 748
+      md5: f89eaab42527072c2425fa9673534b38
+      size: 1633
   measure_16FP:
     cmd: FP16=1 python measure_untrained.py
     deps:
@@ -511,8 +511,8 @@ stages:
       size: 3972
     - path: measure_untrained.py
       hash: md5
-      md5: 36fad7169940088f0a40232c22475227
-      size: 17937
+      md5: 3ce216e15dad817ce885ef68a6d34241
+      size: 17958
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
@@ -520,20 +520,20 @@ stages:
     outs:
     - path: throughput/FP16/latency_results.json
       hash: md5
-      md5: 927f27a8bc3b1876f5c8d7b5646975b8
-      size: 1658
+      md5: a6dd4bad0f8baba9e63372292f21c8e6
+      size: 3597
     - path: throughput/FP16/latency_results_batch.json
       hash: md5
-      md5: 07236c523e7abb180637a30f1097a1df
-      size: 1630
+      md5: 9f15bc400cf0e8021047ca88877c68ef
+      size: 3558
     - path: throughput/FP16/throughput_results.json
       hash: md5
-      md5: 826a9a74e87926a5d6708a0693d8de8e
-      size: 746
+      md5: 4a60cf14bbe69dd5333b9d1604b7837b
+      size: 1631
     - path: throughput/FP16/throughput_results_2.json
       hash: md5
-      md5: 826a9a74e87926a5d6708a0693d8de8e
-      size: 746
+      md5: 4a60cf14bbe69dd5333b9d1604b7837b
+      size: 1631
   quantize_tensorrt_INT8:
     cmd: python quantize_tensorrt.py
     deps:

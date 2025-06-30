@@ -14,6 +14,8 @@ import pycuda.autoinit
 import os
 import yaml
 from onnxconverter_common import float16
+import onnxruntime as ort
+
 # tensorrt, datasets(hugging face), pycuda
 FP16 = os.environ.get("FP16", "0") == "1"
 if FP16:
@@ -24,9 +26,10 @@ else:
     print("FP32")
 
 def to_device(data,device):
-    if isinstance(data, (list,tuple)): #The isinstance() function returns True if the specified object is of the specified type, otherwise False.
+    if isinstance(data, (list,tuple)): 
         return [to_device(x,device) for x in data]
     return data.to(device,non_blocking=True)
+
 
 class DeviceDataLoader():
     def __init__(self,dl,device):
@@ -39,12 +42,9 @@ class DeviceDataLoader():
     
     def __len__(self):
         return len(self.dl)
-    
 
-# accuracy vom LLM berechnen
 
 def accuracy(labels, outputs):
-    # funktioniert nicht mit größerer batch size
     correct_predictions = 0
     total_predictions = 0
     i = 0
@@ -56,69 +56,63 @@ def accuracy(labels, outputs):
         i = i+1
     return correct_predictions, total_predictions
 
+
 def save_json(log, filepath):
     filepath = Path(filepath)
-    filepath.parent.mkdir(parents=True, exist_ok=True)  # Ordner anlegen, falls nicht vorhanden
+    filepath.parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, "w") as f:
         json.dump(log, f, indent=4)
 
 
+def parse_shape(shape, batch_value):
+    """Ersetzt 'batch_size' durch batch_value in der shape-Liste."""
+    return tuple(batch_value if d == "batch_size" else d for d in shape)
 
 
-def measure_latency(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size=1):
+ONNX_TO_TORCH_DTYPE = {
+    "tensor(float)": torch.float32,
+    "tensor(float16)": torch.float16,
+    "tensor(double)": torch.float64,
+    "tensor(int32)": torch.int32,
+    "tensor(int64)": torch.int64,
+    "tensor(uint8)": torch.uint8,
+    "tensor(int8)": torch.int8,
+    "tensor(bool)": torch.bool,
+    # Füge weitere Typen bei Bedarf hinzu
+}
+
+
+def onnx_dtype_to_torch(onnx_dtype_str):
     """
-    Funktion zur Bestimmung der Inferenzlatenz.
+    Wandelt einen ONNX-Datentyp-String in einen torch.dtype um.
     """
-    total_time = 0
-    total_time_synchronize = 0
-    total_time_datatransfer = 0  # Gesamte Laufzeit aller gemessenen Batches
-    iterations = 0  # Anzahl gemessener Batches
-    # wie kann ich die input-sätze von dem Dataloader in den device_input buffer laden?
-    # print("test_loader:", test_loader.batch_size, test_loader.dataset.tensors[0].shape, test_loader.dataset.tensors[1].shape)
-    for xb, yb in test_loader:  
-        start_time_datatransfer = time.time()  # Startzeit messen
-        # print("xb:", xb.shape, xb.dtype)
-        # print("device_input:", device_input.shape, device_input.dtype)
-        # Buffer-Addresses und Shape JEDES MAL neu setzen!
+    return ONNX_TO_TORCH_DTYPE.get(onnx_dtype_str, torch.float32)  # Default: float32
 
 
-        device_input.copy_(xb.to(dtype))
+def get_model_io_info(model_path):
+    """
+    Liest Input- und Output-Infos aus einem ONNX-Modell.
+    Gibt Listen von Dictionaries mit Name, Shape und Dtype zurück.
+    """
+    session = ort.InferenceSession(model_path)
+    input_info = [
+        {
+            "name": inp.name,
+            "shape": inp.shape,
+            "dtype": inp.type
+        }
+        for inp in session.get_inputs()
+    ]
+    output_info = [
+        {
+            "name": out.name,
+            "shape": out.shape,
+            "dtype": out.type
+        }
+        for out in session.get_outputs()
+    ]
+    return input_info, output_info
 
-        context.set_tensor_address("input", device_input.data_ptr()) #important for fp16 version... i dont know why
-        context.set_tensor_address("output", device_output.data_ptr())
-        context.set_input_shape("input", device_input.shape)
-
-        start_time_synchronize = time.time()  # Startzeit messen
-        torch_stream.synchronize()  
-
-        start_time_inteference = time.time()  # Startzeit messen
-        try:
-            with torch.cuda.stream(torch_stream):
-                context.execute_async_v3(stream_ptr)
-        except Exception as e:
-            print("TensorRT Error:", e)
-        torch_stream.synchronize()  # GPU-Synchronisation nach Inferenz
-        end_time = time.time()
-
-        output = device_output.cpu().numpy()
-        end_time_datatransfer = time.time() 
-
-        latency = end_time - start_time_inteference  # Latenz für diesen Batch
-        latency_synchronize = end_time - start_time_synchronize  # Latenz für diesen Batch
-        latency_datatransfer = end_time_datatransfer - start_time_datatransfer  # Latenz für diesen Batch
-
-        total_time += latency
-        total_time_synchronize += latency_synchronize
-        total_time_datatransfer += latency_datatransfer
-        iterations += 1
-        
-        # labels auswerten - zeit messen, bar plots
-    average_latency = (total_time / iterations) * 1000  # In Millisekunden
-    average_latency_synchronize = (total_time_synchronize / iterations) * 1000  # In Millisekunden
-    average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000  # In Millisekunden
-
-
-    return average_latency, average_latency_synchronize, average_latency_datatransfer
 
 def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_time, start_time, num_batches, throughput_batches, throughput_images, batch_size):
     print("For Batch Size: ", batch_size)
@@ -130,13 +124,79 @@ def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_tim
     print(f"Throughput: {throughput_batches:.4f} Batches/Sekunde")
     print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde")
 
-def build_tensorrt_engine(onnx_model_path, test_loader, batch_size):
+
+# Spezifisch für den Datensatz und das Modell!
+# numpy array als allgemeine form!! Einrichten
+def create_test_dataloader(data_path, batch_size, seq_len=32, emb_dim=64):
+    import h5py
+    import numpy as np
+    from torch.utils.data import TensorDataset, DataLoader
+
+    with h5py.File(data_path, "r") as f:
+        X = np.array(f["X"][:10000])  # Nur die ersten 1000 Datensätze
+        Y = np.array(f["Y"][:10000])
+
+    X = X.reshape(X.shape[0], -1)           # [samples, 2048]
+    X = X.reshape(-1, seq_len, emb_dim)     # [samples', 32, 64]
+
+    # Labels ggf. anpassen (z.B. argmax, expand, ... wie im Training)
+    if Y.ndim == 2 and Y.shape[1] > 1:
+        Y = np.argmax(Y, axis=1)
+    Y = np.tile(Y[:, None], (1, seq_len))   
+
+    X = torch.tensor(X, dtype=dtype) 
+    Y = torch.tensor(Y, dtype=torch.long)
+    test_dataset = TensorDataset(X, Y)
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        pin_memory=True,
+        drop_last=True
+    )
+    return test_loader
+
+
+def test_data(context, batch_size):
+    input_info, output_info = get_model_io_info("outputs/model_measuring.onnx")
+    device_inputs = {}
+    device_outputs = {}
+    torch_stream = torch.cuda.Stream()
+    stream_ptr = torch_stream.cuda_stream
+
+    # Inputs vorbereiten
+    for inp in input_info:
+        name = inp["name"]
+        shape = parse_shape(inp["shape"], batch_size)
+        dtype = onnx_dtype_to_torch(inp["dtype"])  # ONNX-Datentyp in PyTorch-Datentyp umwandeln
+        tensor = torch.empty(shape, dtype=dtype, device='cuda')
+        context.set_tensor_address(name, tensor.data_ptr())
+        context.set_input_shape(name, shape)
+        device_inputs[name] = tensor
+
+    # Outputs vorbereiten
+    for out in output_info:
+        name = out["name"]
+        shape = parse_shape(out["shape"], batch_size)
+        dtype = onnx_dtype_to_torch(out["dtype"])  # ONNX-Datentyp in PyTorch-Datentyp umwandeln
+        tensor = torch.empty(shape, dtype=dtype, device='cuda')
+        context.set_tensor_address(name, tensor.data_ptr())
+        device_outputs[name] = tensor
+
+    device_input = next(iter(device_inputs.values()))
+    device_output = next(iter(device_outputs.values()))
+
+    return device_input, device_output, stream_ptr, torch_stream
+
+
+def build_tensorrt_engine(onnx_model_path, test_loader, batch_size, min_bs=1, opt_bs=8, max_bs=1024):
     """
     Erstellt und gibt die TensorRT-Engine und den Kontext zurück.
     :param onnx_model_path: Pfad zur ONNX-Modell-Datei.
     :param logger: TensorRT-Logger.
     :return: TensorRT-Engine und Execution Context.
     """
+    input_info, output_info = get_model_io_info(onnx_model_path)
 
     logger = trt.Logger(trt.Logger.WARNING)
     builder = trt.Builder(logger)
@@ -154,17 +214,19 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size):
     
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 40)
 
-
-    # FP16 Quantisierung
     if FP16 == True:
         config.set_flag(trt.BuilderFlag.FP16)
-        
 
     profile = builder.create_optimization_profile()
 
-    for i in range(network.num_inputs):
-        name = network.get_input(i).name
-        profile.set_shape(name, (1, 32, 64), (8, 32, 64), (1024, 32, 64))
+    for inp in input_info:
+        name = inp["name"]
+        shape = inp["shape"]
+        min_shape = parse_shape(shape, min_bs)
+        opt_shape = parse_shape(shape, opt_bs)
+        max_shape = parse_shape(shape, max_bs)
+        profile.set_shape(name, min_shape, opt_shape, max_shape)
+
     config.add_optimization_profile(profile)
 
     serialized_engine = builder.build_serialized_network(network, config)
@@ -178,40 +240,64 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size):
     return engine, context
 
 
+def measure_latency(context, test_loader, device_input, device_output, stream_ptr, torch_stream, batch_size=1, input_info=None, output_info=None):
+    """
+    Funktion zur Bestimmung der Inferenzlatenz.
+    """
+    total_time = 0
+    total_time_synchronize = 0
+    total_time_datatransfer = 0  
+    iterations = 0 
+    for xb, yb in test_loader:  
+        start_time_datatransfer = time.time()  # Startzeit
 
-def create_test_dataloader(data_path, batch_size, seq_len=32, emb_dim=64):
-    import h5py
-    import numpy as np
-    from torch.utils.data import TensorDataset, DataLoader
+        # Buffer-Addresses und Shape JEDES MAL neu setzen!
+        input_name = input_info[0]["name"]
+        output_name = output_info[0]["name"]
+        dtype = onnx_dtype_to_torch(input_info[0]["dtype"])
 
-    with h5py.File(data_path, "r") as f:
-        X = np.array(f["X"][:10000])  # Nur die ersten 1000 Datensätze
-        Y = np.array(f["Y"][:10000])
+        device_input.copy_(xb.to(dtype))
 
-    # Reshape wie im Training!
-    # Beispiel: von [samples, 1024, 2] zu [samples, 32, 64]
-    # Dazu erst auf [samples, 1024*2], dann auf [-1, 32, 64]
-    X = X.reshape(X.shape[0], -1)           # [samples, 2048]
-    X = X.reshape(-1, seq_len, emb_dim)     # [samples', 32, 64]
+        context.set_tensor_address(input_name, device_input.data_ptr())
+        context.set_tensor_address(output_name, device_output.data_ptr())
+        context.set_input_shape(input_name, device_input.shape)
 
-    # Labels ggf. anpassen (z.B. argmax, expand, ... wie im Training)
-    if Y.ndim == 2 and Y.shape[1] > 1:
-        Y = np.argmax(Y, axis=1)
-    Y = np.tile(Y[:, None], (1, seq_len))   # [samples', seq_len]
+        torch_stream.synchronize()
 
-    X = torch.tensor(X, dtype=dtype) #dtype
-    Y = torch.tensor(Y, dtype=torch.long)
-    test_dataset = TensorDataset(X, Y)
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        pin_memory=True,
-        drop_last=True
-    )
-    return test_loader
+        start_time_synchronize = time.time()  
+        torch_stream.synchronize()  
 
-def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
+        start_time_inteference = time.time() 
+        try:
+            with torch.cuda.stream(torch_stream):
+                context.execute_async_v3(stream_ptr)
+        except Exception as e:
+            print("TensorRT Error:", e)
+        torch_stream.synchronize() 
+        end_time = time.time()
+
+        output = device_output.cpu().numpy()
+        end_time_datatransfer = time.time() 
+
+        latency = end_time - start_time_inteference  
+        latency_synchronize = end_time - start_time_synchronize  
+        latency_datatransfer = end_time_datatransfer - start_time_datatransfer  
+
+        total_time += latency
+        total_time_synchronize += latency_synchronize
+        total_time_datatransfer += latency_datatransfer
+        iterations += 1
+        
+       
+    average_latency = (total_time / iterations) * 1000  # In Millisekunden
+    average_latency_synchronize = (total_time_synchronize / iterations) * 1000  # In Millisekunden
+    average_latency_datatransfer = (total_time_datatransfer / iterations) * 1000  # In Millisekunden
+
+
+    return average_latency, average_latency_synchronize, average_latency_datatransfer
+
+
+def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path, input_info=None, output_info=None):
     """
     Berechnet die durchschnittliche Latenz und den Durchsatz (Bilder und Batches pro Sekunde) für verschiedene Batchgrößen.
     :param context: TensorRT-Execution-Context.
@@ -250,7 +336,9 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
                 device_output=device_output,
                 stream_ptr=stream_ptr,
                 torch_stream=torch_stream,
-                batch_size=batch_size
+                batch_size=batch_size,
+                input_info=input_info,
+                output_info=output_info
             )
             latency_ms_sum = latency_ms_sum + latency_ms
             latency_synchronize_sum = latency_synchronize_sum + (latency_synchronize-latency_ms)
@@ -286,62 +374,35 @@ def calculate_latency_and_throughput(context, batch_sizes, onnx_model_path):
 
     return throughput_log, latency_log, latency_log_batch
 
-def test_data(context, batch_size):
-    input_name = "input"    # Name wie im ONNX-Modell
-    output_name = "output"  # Name wie im ONNX-Modell
-    input_shape = (batch_size, 32, 64)
-    output_shape = (batch_size, 32, 24)
-    device_input = torch.empty(input_shape, dtype=dtype, device='cuda')
-    device_output = torch.empty(output_shape, dtype=torch.float32, device='cuda')
-    torch_stream = torch.cuda.Stream()
-    stream_ptr = torch_stream.cuda_stream
-    context.set_tensor_address(input_name, device_input.data_ptr())
-    context.set_tensor_address(output_name, device_output.data_ptr())
-    context.set_input_shape(input_name, input_shape)  # für dynamische batch size
-    return device_input, device_output, stream_ptr, torch_stream
 
-
-def append_json(new_entry, filepath):
-    filepath = Path(filepath)
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-    # Bestehende Daten laden, falls vorhanden
-    if filepath.exists():
-        with open(filepath, "r") as f:
-            try:
-                data = json.load(f)
-                if not isinstance(data, list):
-                    data = [data]
-            except Exception:
-                data = []
-    else:
-        data = []
-    data.append(new_entry)
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=4)
-
-def run_inference(batch_size=1):
+def run_inference(batch_size=1, input_info=None, output_info=None):
     """pynvml-Stream-Pointer.
     :param torch_stream: PyTorch CUDA-Stream.
     :param max_iterations: Maximalanzahl der Iterationen.
     :return: (Anzahl der korrekten Vorhersagen, Gesamtanzahl der Vorhersagen).
     """
+
     test_loader = create_test_dataloader(data_path, batch_size)
     engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size)
-    device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size) # anpassen!!
-    print("device_input:", device_input.shape, device_input.dtype)
-    print("device_output:", device_output.shape, device_output.dtype)
+    device_input, device_output, stream_ptr, torch_stream = test_data(context, batch_size)
+    print("device_input:", device_input.shape, device_input.dtype) 
+    print("device_output:", device_output.shape, device_output.dtype) 
 
     total_predictions = 0
     correct_predictions = 0
 
-
+    # ist unterschiedlich je nach modell - aber eig. sind die ähnlich aufgebaut
     for xb, yb in test_loader:
+
+        input_name = input_info[0]["name"]
+        output_name = output_info[0]["name"]
+        dtype = onnx_dtype_to_torch(input_info[0]["dtype"])
 
         device_input.copy_(xb.to(dtype))
 
-        context.set_tensor_address("input", device_input.data_ptr())
-        context.set_tensor_address("output", device_output.data_ptr())
-        context.set_input_shape("input", device_input.shape)
+        context.set_tensor_address(input_name, device_input.data_ptr())
+        context.set_tensor_address(output_name, device_output.data_ptr())
+        context.set_input_shape(input_name, device_input.shape)
         torch_stream.synchronize()
         
         try:
@@ -351,6 +412,7 @@ def run_inference(batch_size=1):
             print("TensorRT Error:", e)
         torch_stream.synchronize()
         torch.cuda.synchronize()  # Warten auf Abschluss der Inferenz
+
         output = device_output.cpu().numpy()
 
         pred = output.argmax(axis=-1)  # [batch, seq_len]
@@ -358,37 +420,24 @@ def run_inference(batch_size=1):
         total = np.prod(yb.shape)
         correct_predictions += correct
         total_predictions += total
-    # del device_input, device_output, stream_ptr, torch_stream, engine, context
     return correct_predictions, total_predictions
-
-# Montag:
-# richtiges modell verwenden/an passender Stelle exportieren - funkioniert nicht, schon in model.py sind nodes die tensorrt nicht versteht
-# erstmal eigenes, ähnliches modell verwenden. die outputs und inputs sind aber gleich
-# in pipeline einbauen - gemacht
-# grafiken erstellen - gemacht
-
-
-# Dienstag:
-# FP 16 testen - gemacht, aber kein unterschied zu FP 32 (etwas schlechter), [06/17/2025-12:29:42] [TRT] [E] IExecutionContext::enqueueV3: Error Code 1: Cuda Runtime (invalid resource handle)
-# quantisiertes modell messen, testen, ähnlicheres modell verwenden
 
 
 if __name__ == "__main__":
-    onnx_model_path = "outputs/model_nonquantized.onnx"
+    # muss in parameter datei:
     onnx_model_path = "outputs/model_measuring.onnx"
-    model = onnx.load("outputs/model_measuring.onnx") # model_fp16
+    data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"
+    batch_sizes = [1, 2, 4, 8 , 16, 32, 64, 128, 256, 512, 1024]  
+
+
+    model = onnx.load(onnx_model_path)
     if FP16:
         model = float16.convert_float_to_float16(model)
-        print([i.name for i in model.graph.input])
-        print([o.name for o in model.graph.output])
 
-    data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"  # Pfad zu den Testdaten
-
-    batch_sizes = [1, 2, 4, 8 , 16, 32, 64, 128, 256, 512, 1024]  # Liste der Batchgrößen
-
+    input_info, output_info = get_model_io_info(onnx_model_path)
 
     context=0
-    correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
+    correct_predictions, total_predictions = run_inference(batch_size=1, input_info=input_info, output_info=output_info) 
     print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
 
     accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_FP16.json" if FP16 else Path(__file__).resolve().parent / "eval_results" /"accuracy_FP32.json"
@@ -401,7 +450,7 @@ if __name__ == "__main__":
     
 
 
-    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path)
+    throughput_log, latency_log, latency_log_batch = calculate_latency_and_throughput(context, batch_sizes, onnx_model_path, input_info=input_info, output_info=output_info)
     if FP16:
         throughput_results = Path(__file__).resolve().parent / "throughput" / "FP16" / "throughput_results.json"
         throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP16"/ "throughput_results_2.json"
@@ -417,3 +466,12 @@ if __name__ == "__main__":
     save_json(latency_log, latency_results)
     save_json(latency_log_batch, latency_results_batch)
 
+
+# code generalisiert - fertig
+# code verschönert - fertig
+# mit llm pilpeline testen und fp16 vergelich datentypen - aktuell
+# bei llm: daten in numpy umwandeln
+# test_data_loader anpassen (alle daten als numpy dateien lesen)
+# christoph schreiben - er schickt mir andere models zum testen
+# mit anderen modellen testen
+# mit jetson testen (gleiche zugangsdaten wie pc)

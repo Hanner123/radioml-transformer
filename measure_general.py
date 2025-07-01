@@ -119,7 +119,7 @@ def print_latency(latency_ms, latency_synchronize, latency_datatransfer, end_tim
     print(f"Throughput: {throughput_images:.4f} Bilder/Sekunde")
 
 
-def create_test_dataloader_general(data_path, batch_size):
+def create_test_dataloader(data_path, batch_size):
     """
     Erstellt den DataLoader für die Testdaten.
     :param data_path: Pfad zur Testdaten-Datei.
@@ -165,7 +165,7 @@ def create_test_dataloader_general(data_path, batch_size):
 
 # Spezifisch für den Datensatz und das Modell!
 # numpy array als allgemeine form!! Einrichten
-def create_test_dataloader(data_path, batch_size, seq_len=32, emb_dim=64):
+def create_test_dataloader_h5py(data_path, batch_size, seq_len=32, emb_dim=64):
     import h5py
     import numpy as np
     from torch.utils.data import TensorDataset, DataLoader
@@ -478,7 +478,7 @@ def run_accuracy_eval(batch_size, input_info, output_info, data_path, onnx_model
 if __name__ == "__main__":
     # muss in parameter datei:
     onnx_model_path = "outputs/model_measuring.onnx"
-    data_path = "data/GOLD_XYZ_OSC.0001_1024.hdf5"
+    data_path = "data/GOLD_XYZ_OSC.0001_1024.npz"
     batch_sizes = [1, 2, 4, 8 , 16, 32, 64, 128, 256, 512, 1024]  
 
     # params = load_params()

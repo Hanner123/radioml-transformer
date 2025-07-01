@@ -136,12 +136,12 @@ stages:
       - outputs/model_nonquantized.onnx
   # stage measuring the speed of non-quantized model
   measure_32FP:
-    cmd: FP16=0 python measure_untrained.py
+    cmd: FP16=0 python measure_general.py
     deps:
       - export_untrained.py
       - outputs/model_nonquantized.onnx
       - outputs/model_measuring.onnx
-      - measure_untrained.py
+      - measure_general.py
     plots:
      -  throughput/FP32/throughput_results.json:
          template: plot_templates/bar_2.json
@@ -164,11 +164,11 @@ stages:
          y: value
          cache: false
   measure_16FP:
-    cmd: FP16=1 python measure_untrained.py
+    cmd: FP16=1 python measure_general.py
     deps:
       - export_untrained.py
       - outputs/model_nonquantized.onnx
-      - measure_untrained.py
+      - measure_general.py
     plots:
      -  throughput/FP16/throughput_results.json:
          template: plot_templates/bar_2_FP16.json

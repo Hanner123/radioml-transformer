@@ -18,12 +18,19 @@ import onnxruntime as ort
 
 # tensorrt, datasets(hugging face), pycuda
 FP16 = os.environ.get("FP16", "0") == "1"
+INT8 = os.environ.get("INT8", "0") == "1"
+
 if FP16:
     dtype = torch.float16
     print("FP16 enabled")
+elif INT8:
+    dtype = torch.int8
+    print("INT8 enabled")
 else:
     dtype = torch.float32
     print("FP32")
+
+
 
 def to_device(data,device):
     if isinstance(data, (list,tuple)): 
@@ -50,7 +57,6 @@ def load_params():
 
 
 
-
 def save_json(log, filepath):
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -60,7 +66,12 @@ def save_json(log, filepath):
 
 def parse_shape(shape, batch_value):
     """Ersetzt 'batch_size' durch batch_value in der shape-Liste."""
-    return tuple(batch_value if d == "batch_size" else d for d in shape)
+    return tuple(
+        batch_value if d == "batch_size"
+        else 128 if d == "sequence_length"
+        else d
+        for d in shape
+    )
 
 
 ONNX_TO_TORCH_DTYPE = {
@@ -129,7 +140,11 @@ def create_test_dataloader(data_path, batch_size):
     data = np.load(data_path)
     input_info, output_info = get_model_io_info(onnx_model_path)
     key_list = list(data.keys())
-    if len(input_info) > 1:
+    if len(input_info) == 2:
+        input_key = key_list[0]
+        attention_mask_key = key_list[1]
+        output_key = key_list[2]
+    elif len(input_info) == 3:
         input_key = key_list[0]
         attention_mask_key = key_list[1]
         output_key = key_list[2]
@@ -143,6 +158,7 @@ def create_test_dataloader(data_path, batch_size):
     attention_mask = torch.from_numpy(data[attention_mask_key]) if attention_mask_key else None
     labels = torch.from_numpy(data[output_key])
 
+    # Nur das erste Sample auswählen
     if len(input_info) > 1:
         test_dataset = TensorDataset(input_ids, attention_mask, labels)
         test_loader = DataLoader(
@@ -162,10 +178,9 @@ def create_test_dataloader(data_path, batch_size):
             drop_last=True
         )
     return test_loader
-
 # Spezifisch für den Datensatz und das Modell!
 # numpy array als allgemeine form!! Einrichten
-def create_test_dataloader_h5py(data_path, batch_size, seq_len=32, emb_dim=64):
+def create_test_dataloader_radiollm(data_path, batch_size, seq_len=32, emb_dim=64):
     import h5py
     import numpy as np
     from torch.utils.data import TensorDataset, DataLoader
@@ -199,6 +214,7 @@ def test_data(context, batch_size, input_info, output_info):
     device_inputs = {}
     device_outputs = {}
     device_attention_masks = {}
+    device_token_type = {}
     torch_stream = torch.cuda.Stream()
     stream_ptr = torch_stream.cuda_stream
 
@@ -207,6 +223,7 @@ def test_data(context, batch_size, input_info, output_info):
     name = inp["name"]
     shape = parse_shape(inp["shape"], batch_size)
     dtype = onnx_dtype_to_torch(inp["dtype"])  # ONNX-Datentyp in PyTorch-Datentyp umwandeln
+    dtype_out = onnx_dtype_to_torch(output_info[0]["dtype"])  # Ausgabe-Datentyp
     tensor = torch.empty(shape, dtype=dtype, device='cuda')
     context.set_tensor_address(name, tensor.data_ptr())
     context.set_input_shape(name, shape)
@@ -219,15 +236,26 @@ def test_data(context, batch_size, input_info, output_info):
         att_mask_dtype = onnx_dtype_to_torch(input_info[1]["dtype"])
         att_mask_tensor = torch.empty(att_mask_shape, dtype=att_mask_dtype, device='cuda')
         context.set_tensor_address(att_mask_name, att_mask_tensor.data_ptr())
+        context.set_input_shape(att_mask_name, att_mask_shape)
 
         device_attention_masks[att_mask_name] = att_mask_tensor
+
+    if len(input_info) > 2:
+        token_type_name = input_info[2]["name"]
+        token_type_shape = parse_shape(input_info[2]["shape"], batch_size)
+        token_type_dtype = onnx_dtype_to_torch(input_info[2]["dtype"])
+        token_type_tensor = torch.empty(token_type_shape, dtype=token_type_dtype, device='cuda')
+        context.set_tensor_address(token_type_name, token_type_tensor.data_ptr())
+        context.set_input_shape(token_type_name, token_type_shape)
+
+        device_token_type[token_type_name] = token_type_tensor
 
     # Outputs vorbereiten
     for out in output_info:
         name = out["name"]
         shape = parse_shape(out["shape"], batch_size)
         dtype = onnx_dtype_to_torch(out["dtype"])  # ONNX-Datentyp in PyTorch-Datentyp umwandeln
-        tensor = torch.empty(shape, dtype=dtype, device='cuda')
+        tensor = torch.empty(shape, dtype=dtype_out, device='cuda')
         context.set_tensor_address(name, tensor.data_ptr())
         device_outputs[name] = tensor
 
@@ -239,7 +267,12 @@ def test_data(context, batch_size, input_info, output_info):
     else:
         device_attention_mask = None
 
-    return device_input, device_output, device_attention_mask, stream_ptr, torch_stream
+    if len(input_info) > 2:
+        device_token_type = next(iter(device_token_type.values()))
+    else:
+        device_token_type = None
+
+    return device_input, device_output, device_attention_mask, device_token_type, stream_ptr, torch_stream
 
 
 def build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info=None, min_bs=1, opt_bs=8, max_bs=1024):
@@ -266,6 +299,8 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info=N
 
     if FP16 == True:
         config.set_flag(trt.BuilderFlag.FP16)
+    if INT8 == True:
+        config.set_flag(trt.BuilderFlag.INT8)
 
     profile = builder.create_optimization_profile()
 
@@ -290,7 +325,7 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info=N
     return engine, context
 
 
-def run_inference(context, test_loader, device_input, device_output, device_attention_mask, stream_ptr, torch_stream, batch_size=1, input_info=None, output_info=None, accuracy_flag=False):
+def run_inference(context, test_loader, device_input, device_output, device_attention_mask, device_token_type, stream_ptr, torch_stream, batch_size=1, input_info=None, output_info=None, accuracy_flag=False):
     """
     Funktion zur Bestimmung der Inferenzlatenz.
     """
@@ -302,15 +337,19 @@ def run_inference(context, test_loader, device_input, device_output, device_atte
     total_predictions = 0
     correct_predictions = 0
 
-    for batch in test_loader:  
+    for batch in test_loader: 
         # je nach Aufbau des Modells: mit Attention Mask oder ohne
         if len(batch) == 2:
             xb, yb = batch
             att_mask = None
+            token_type = None
         elif len(batch) == 3:
             xb, att_mask, yb = batch
+            token_type = None
+        elif len(batch) == 4:
+            xb, att_mask, yb, token_type = batch
         else:
-            raise ValueError("Unerwartete Batch-Größe!")
+            raise ValueError("Unerwartete Batch-Größe!", len(batch))
         
         start_time_datatransfer = time.time()  # Startzeit        
 
@@ -326,6 +365,12 @@ def run_inference(context, test_loader, device_input, device_output, device_atte
             device_attention_mask.copy_(att_mask.to(dtype))
             context.set_tensor_address(att_mask_name, device_attention_mask.data_ptr())
             context.set_input_shape(att_mask_name, device_attention_mask.shape)
+        
+        if token_type is not None:
+            token_type_name = input_info[2]["name"]
+            device_token_type.copy_(token_type.to(dtype))
+            context.set_tensor_address(token_type_name, device_token_type.data_ptr())
+            context.set_input_shape(token_type_name, device_token_type.shape)
 
         output_name = output_info[0]["name"]
         context.set_tensor_address(output_name, device_output.data_ptr()) 
@@ -397,7 +442,7 @@ def calculate_latency_and_throughput(batch_sizes, onnx_model_path, input_info, o
     for batch_size in batch_sizes:
         test_loader = create_test_dataloader(data_path, batch_size) 
         engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info)
-        device_input, device_output, device_attention_mask, stream_ptr, torch_stream = test_data(context, batch_size, input_info, output_info)
+        device_input, device_output, device_attention_mask, device_token_type, stream_ptr, torch_stream = test_data(context, batch_size, input_info, output_info)
 
         
         # Schleife für durchschnitt
@@ -414,6 +459,7 @@ def calculate_latency_and_throughput(batch_sizes, onnx_model_path, input_info, o
                 device_input=device_input,
                 device_output=device_output,
                 device_attention_mask=device_attention_mask,
+                device_token_type=device_token_type,
                 stream_ptr=stream_ptr,
                 torch_stream=torch_stream,
                 batch_size=batch_size,
@@ -458,13 +504,14 @@ def calculate_latency_and_throughput(batch_sizes, onnx_model_path, input_info, o
 def run_accuracy_eval(batch_size, input_info, output_info, data_path, onnx_model_path):
     test_loader = create_test_dataloader(data_path, 1)
     engine, context = build_tensorrt_engine(onnx_model_path, test_loader, 1, input_info)
-    device_input, device_output, device_attention_mask, stream_ptr, torch_stream = test_data(context, 1, input_info, output_info)
+    device_input, device_output, device_attention_mask, device_token_type, stream_ptr, torch_stream = test_data(context, 1, input_info, output_info)
     _, _, _, accuracy = run_inference(
                 context=context,
                 test_loader=test_loader,
                 device_input=device_input,
                 device_output=device_output,
                 device_attention_mask=device_attention_mask,
+                device_token_type=device_token_type,
                 stream_ptr=stream_ptr,
                 torch_stream=torch_stream,
                 batch_size=batch_size,
@@ -481,8 +528,9 @@ if __name__ == "__main__":
     data_path = "data/GOLD_XYZ_OSC.0001_1024.npz"
     batch_sizes = [1, 2, 4, 8 , 16, 32, 64, 128, 256, 512, 1024]  
 
-    # params = load_params()
-    # batch_sizes = params["measure"]["batch_sizes"]
+    if INT8:
+        onnx_model_path = Path(__file__).resolve().parent / "models" / "tinybert_int8" / "model.onnx"
+
 
 
     model = onnx.load(onnx_model_path)
@@ -496,8 +544,17 @@ if __name__ == "__main__":
     accuracy = run_accuracy_eval(batch_size, input_info, output_info, data_path, onnx_model_path)
     print(f"Accuracy : {accuracy:.2%}")
 
-    accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_FP16.json" if FP16 else Path(__file__).resolve().parent / "eval_results" /"accuracy_FP32.json"
-    quantisation_type = "FP16" if FP16 else "FP32"
+    if FP16:
+        accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_FP16.json"
+        quantisation_type = "FP16"
+    elif INT8:
+        accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_INT8.json"
+        quantisation_type = "INT8"
+    else:
+        accuracy_path = Path(__file__).resolve().parent / "eval_results" /"accuracy_FP32.json"
+        quantisation_type = "FP32"
+
+ 
     accuracy_result = {
         "quantisation_type": quantisation_type,
         "value": accuracy
@@ -512,6 +569,11 @@ if __name__ == "__main__":
         throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP16"/ "throughput_results_2.json"
         latency_results = Path(__file__).resolve().parent / "throughput" / "FP16"/ "latency_results.json"
         latency_results_batch = Path(__file__).resolve().parent / "throughput" / "FP16"/ "latency_results_batch.json"
+    elif INT8:
+        throughput_results = Path(__file__).resolve().parent / "throughput" / "INT8" / "throughput_results.json"
+        throughput_results2 = Path(__file__).resolve().parent / "throughput" / "INT8"/ "throughput_results_2.json"
+        latency_results = Path(__file__).resolve().parent / "throughput" / "INT8"/ "latency_results.json"
+        latency_results_batch = Path(__file__).resolve().parent / "throughput" / "INT8"/ "latency_results_batch.json"
     else:
         throughput_results = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results.json"
         throughput_results2 = Path(__file__).resolve().parent / "throughput" / "FP32"/ "throughput_results_2.json"
@@ -523,14 +585,22 @@ if __name__ == "__main__":
     save_json(latency_log_batch, latency_results_batch)
 
 
+
 # code generalisiert - fertig
 # code verschönert - fertig
 # mit llm pipeline testen - fertig, aber doch noch änderungen mit attention mask in inference schleifen..
 # fp16 vergleich datentypen - passt
 # bei llm: daten in numpy umwandeln - fertig
 # test_data_loader anpassen (alle daten als numpy dateien lesen) - fertig
-
 # mit radio ml testen (erst in numpy umwandeln, dann in dataloader) - fertig
-# christoph schreiben - er schickt mir andere models zum testen
-# mit anderen modellen testen
+# christoph schreiben - er schickt mir andere models zum testen - fertig
+# auch int 8 generalisieren - fertig
+
+# int 8 radioml testen
+
 # mit jetson testen (gleiche zugangsdaten wie pc)
+
+
+# mit anderen modellen testen
+
+

@@ -529,8 +529,8 @@ if __name__ == "__main__":
 # fp16 vergleich datentypen - passt
 # bei llm: daten in numpy umwandeln - fertig
 # test_data_loader anpassen (alle daten als numpy dateien lesen) - fertig
-
 # mit radio ml testen (erst in numpy umwandeln, dann in dataloader) - fertig
+
 # christoph schreiben - er schickt mir andere models zum testen
 # mit anderen modellen testen
 # mit jetson testen (gleiche zugangsdaten wie pc)

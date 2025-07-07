@@ -3,6 +3,7 @@ import dvc.api
 # Save verification input-output pair as numpy array
 import numpy as np
 # PyTorch base package: Math and Tensor Stuff
+import onnx
 import torch
 # Brevitas to QONNX model export
 from brevitas.export import export_qonnx
@@ -43,7 +44,6 @@ def export(model, dataset, **kwargs):  # noqa: Shadows model
     # Export the model graph to QONNX
     export_qonnx(model, (inp,), "outputs/model.onnx", **kwargs)
 
-        # onnx_path = "outputs/urspruengliches_model.onnx"
     onnx_path = "outputs/model_measuring.onnx"
     torch.onnx.export(
         model,
@@ -57,8 +57,32 @@ def export(model, dataset, **kwargs):  # noqa: Shadows model
         dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
     )
     print(f"Modell als ONNX exportiert: {onnx_path}")
-    # normales onnx zusätzlich oder als parameter option export format
 
+
+    # Brevitas 8Bit export
+    data_path = "data/GOLD_XYZ_OSC.0001_1024.npz"
+    data = np.load(data_path)
+    key_list = list(data.keys())
+    print(key_list[0])
+    X = data[key_list[0]]  
+    dummy_input = torch.randn(1, *X.shape[1:], dtype=torch.float32)
+    from brevitas.export import export_onnx_qcdq
+    export_onnx_qcdq(
+        model, 
+        dummy_input, 
+        export_path="outputs/model_brevitas.onnx")
+    print("Quantisiertes Modell erfolgreich exportiert!")
+    model = onnx.load("outputs/model_brevitas.onnx")
+    # Setze die erste Dimension (Batch) auf dynamisch
+    model.graph.input[0].type.tensor_type.shape.dim[0].dim_param = "batch_size"
+    # Optional: Auch für Output
+    model.graph.output[0].type.tensor_type.shape.dim[0].dim_param = "batch_size"
+    # Speichern
+    onnx.save(model, "outputs/model_brevitas_dynamic.onnx")
+
+    # brevitas ergänzen + dynamic axes
+    # jetson, 4bit möglich- wahrscheinlich schon
+    # zwei neue kapitel paper
 
 # Check whether a layer is a normalization layer of some supported type
 def is_norm_layer(module):
@@ -121,6 +145,6 @@ if __name__ == "__main__":
 
 
 # Aufgaben: 
-# Export mit batch-norm
-# plots vereinheitlichen
+# Export mit batch-norm - funktioniert
+# plots vereinheitlichen - passen zusammen
 # code vereinheitlichen, was sind die unterschiede, wo müssen Änderungen bei anderen Modellen gemacht werden?? - Readme erstellen

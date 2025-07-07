@@ -16,12 +16,12 @@ from activations import QuantReLU, QuantSiLU, QuantGLU  # noqa: Maybe unused
 # signedness configurable
 def weight_quantizer(bits, _signed=True):
     # Brevitas quantizer base classes
-    from brevitas.quant.base import NarrowIntQuant, MaxStatsScaling
+    from brevitas.quant.base import IntQuant, MaxStatsScaling
     from brevitas.quant.solver import WeightQuantSolver
     from brevitas.inject.enum import RestrictValueType
 
     # Derive a Quantizer from the brevitas bases
-    class Quantizer(NarrowIntQuant, MaxStatsScaling, WeightQuantSolver):
+    class Quantizer(IntQuant, MaxStatsScaling, WeightQuantSolver):
         # Configure the quantization bit-width
         bit_width = bits
         # Signedness of the quantization output

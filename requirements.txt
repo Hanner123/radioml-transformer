@@ -1,4 +1,4 @@
-brevitas @ git+https://github.com/iksnagreb/brevitas.git@003f9f4070c20639790c7b406a28612a089fc502
+brevitas @ git+https://github.com/iksnagreb/brevitas.git@003f9f4070c20639790c7b406a28612a089fc502 # andere Version für brevitas quant nötig!!
 qonnx @ git+https://github.com/iksnagreb/qonnx.git@4b731dbf3120316f11ae1c4b298ceaf9e73f21b3
 finn @ git+https://github.com/eki-project/finn-plus.git@affcbb12a57caa96fb00f0ec9bd6f696279752c2
 numpy~=1.26.4

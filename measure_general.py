@@ -153,7 +153,6 @@ def create_test_dataloader(data_path, batch_size):
         attention_mask_key = None
         output_key = key_list[1]
     
-    
     input_ids = torch.from_numpy(data[input_key])
     attention_mask = torch.from_numpy(data[attention_mask_key]) if attention_mask_key else None
     labels = torch.from_numpy(data[output_key])
@@ -529,7 +528,8 @@ if __name__ == "__main__":
     batch_sizes = [1, 2, 4, 8 , 16, 32, 64, 128, 256, 512, 1024]  
 
     if INT8:
-        onnx_model_path = Path(__file__).resolve().parent / "models" / "tinybert_int8" / "model.onnx"
+        onnx_model_path = "outputs/model_brevitas_dynamic.onnx" # gibt da noch einen Fehler
+        # onnx_model_path = "outputs/model_brevitas.onnx" # funktioniert mit batch size 1, aber nicht mit batch size 2
 
 
 

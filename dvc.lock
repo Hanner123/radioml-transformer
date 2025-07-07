@@ -17,8 +17,8 @@ stages:
       size: 5248
     - path: model.py
       hash: md5
-      md5: 3e64645795c7578b24406f9694c48aaa
-      size: 59858
+      md5: 7f044f7bca2b20f8aed5fa91ad9cbba5
+      size: 59846
     - path: noctua.sh
       hash: md5
       md5: f3e8cc342b63cddcd2e07bfe63f6518c
@@ -73,7 +73,7 @@ stages:
           norm: batch-norm
           positional_encoding: binary
           dropout: 0.0
-          bits: 4
+          bits: 8
           input_bits: 8
           output_bits: 8
           num_classes: 24
@@ -99,15 +99,15 @@ stages:
     outs:
     - path: loss.yaml
       hash: md5
-      md5: 50f6cd8c9c9a4380f4f00997a25620cf
-      size: 59
+      md5: 6da8f2c5aec97f30509f13e2b144b042
+      size: 61
     - path: outputs/model.pt
       hash: md5
-      md5: 583beab88f44b511f37c10b3057cfed7
-      size: 1022286
+      md5: 4c686cab4e6d785ed28d5d2ffa5ba68a
+      size: 1064590
     - path: outputs/optimizer.pt
       hash: md5
-      md5: 323b29e775a3694106aa75b4a309195e
+      md5: 795a745123ad6930bf119a4f5f8ae832
       size: 1540346
   eval:
     cmd: python -m eval
@@ -130,12 +130,12 @@ stages:
       size: 4702
     - path: model.py
       hash: md5
-      md5: 3e64645795c7578b24406f9694c48aaa
-      size: 59858
+      md5: 7f044f7bca2b20f8aed5fa91ad9cbba5
+      size: 59846
     - path: outputs/model.pt
       hash: md5
-      md5: 583beab88f44b511f37c10b3057cfed7
-      size: 1022286
+      md5: 4c686cab4e6d785ed28d5d2ffa5ba68a
+      size: 1064590
     params:
       params.yaml:
         dataset:
@@ -184,7 +184,7 @@ stages:
           norm: batch-norm
           positional_encoding: binary
           dropout: 0.0
-          bits: 4
+          bits: 8
           input_bits: 8
           output_bits: 8
           num_classes: 24
@@ -192,16 +192,16 @@ stages:
     outs:
     - path: accuracy-per-snr.yaml
       hash: md5
-      md5: 261b964162d259f1cdf85e791524a05f
-      size: 703
+      md5: 2893188ba6f8d72368c0b41ed4f46c7a
+      size: 698
     - path: accuracy.yaml
       hash: md5
-      md5: 3314e094685f31d444fed095f3b5b8c8
-      size: 30
+      md5: 5aa5660f877d5ce3f8d0cf86ce470d65
+      size: 29
     - path: classes.csv
       hash: md5
-      md5: f482fda4ca848cf7f034274ce03126c1
-      size: 975449
+      md5: ff8dcb76314e0f64a6ed6dd6d9987a3f
+      size: 957328
   export:
     cmd: python -m export
     deps:
@@ -219,16 +219,16 @@ stages:
       size: 5248
     - path: export.py
       hash: md5
-      md5: 16ca99bece008f9a3e9ca71f76dcfcb2
-      size: 5227
+      md5: 26f1303a966167809ce047fd68eaa44e
+      size: 6117
     - path: model.py
       hash: md5
-      md5: 3e64645795c7578b24406f9694c48aaa
-      size: 59858
+      md5: 7f044f7bca2b20f8aed5fa91ad9cbba5
+      size: 59846
     - path: outputs/model.pt
       hash: md5
-      md5: 583beab88f44b511f37c10b3057cfed7
-      size: 1022286
+      md5: 4c686cab4e6d785ed28d5d2ffa5ba68a
+      size: 1064590
     params:
       params.yaml:
         dataset:
@@ -274,7 +274,7 @@ stages:
           norm: batch-norm
           positional_encoding: binary
           dropout: 0.0
-          bits: 4
+          bits: 8
           input_bits: 8
           output_bits: 8
           num_classes: 24
@@ -286,15 +286,15 @@ stages:
       size: 8320
     - path: outputs/model.onnx
       hash: md5
-      md5: 11313615f0f874aa131f2390e3fd462e
-      size: 862020
+      md5: cb2b3f61a49196cdae85d9e3fcfc8ecb
+      size: 860764
     - path: outputs/model_measuring.onnx
       hash: md5
-      md5: 1688a58cf6aaec9e1483cccf7f60abb5
-      size: 2191407
+      md5: 1ea0f5bcd722363c91c26fbcb2e9ac6a
+      size: 2270345
     - path: outputs/out.npy
       hash: md5
-      md5: f7a3a8ea15941b9dd2ae1286cd9cff69
+      md5: c487008f03d4643d6cc50b77bdd22424
       size: 3200
   build:
     cmd: bash run.sh '$FINN/run-docker.sh build_custom $(pwd)'
@@ -475,12 +475,12 @@ stages:
       size: 3972
     - path: measure_general.py
       hash: md5
-      md5: 8b72dd3490e834b6c94e22f566bcda09
-      size: 23591
+      md5: d46d63c0f36a5a50c6a12677c66983bc
+      size: 23548
     - path: outputs/model_measuring.onnx
       hash: md5
-      md5: 1688a58cf6aaec9e1483cccf7f60abb5
-      size: 2191407
+      md5: 1ea0f5bcd722363c91c26fbcb2e9ac6a
+      size: 2270345
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
@@ -488,20 +488,20 @@ stages:
     outs:
     - path: throughput/FP32/latency_results.json
       hash: md5
-      md5: 70f4f97aef9de235913cae32bcc05caa
-      size: 3599
+      md5: 277c0a2ab0bad20abe92c071c9429cdb
+      size: 3597
     - path: throughput/FP32/latency_results_batch.json
       hash: md5
-      md5: bf5395a428daa69babce020806c92d98
-      size: 3567
+      md5: 6ee10f5406b6137d16b1ed1d3b08b959
+      size: 3552
     - path: throughput/FP32/throughput_results.json
       hash: md5
-      md5: 7fc6ff27e2e07134e1a4d92f47ffdac2
-      size: 1634
+      md5: 825ddb3551724853d7c21b9e61fe4f9d
+      size: 1629
     - path: throughput/FP32/throughput_results_2.json
       hash: md5
-      md5: 7fc6ff27e2e07134e1a4d92f47ffdac2
-      size: 1634
+      md5: 825ddb3551724853d7c21b9e61fe4f9d
+      size: 1629
   measure_16FP:
     cmd: FP16=1 python measure_general.py
     deps:
@@ -511,8 +511,8 @@ stages:
       size: 3972
     - path: measure_general.py
       hash: md5
-      md5: 8b72dd3490e834b6c94e22f566bcda09
-      size: 23591
+      md5: d46d63c0f36a5a50c6a12677c66983bc
+      size: 23548
     - path: outputs/model_nonquantized.onnx
       hash: md5
       md5: 31115226968caf795f71b44bf4073ba0
@@ -520,20 +520,20 @@ stages:
     outs:
     - path: throughput/FP16/latency_results.json
       hash: md5
-      md5: 82e83c022d0776b31ad0ba3a823080c1
-      size: 3598
+      md5: a919757b8b4353fe42726cbabf4cf56a
+      size: 3600
     - path: throughput/FP16/latency_results_batch.json
       hash: md5
-      md5: 5ec30ced418a98114659b45746b01cb9
-      size: 3561
+      md5: 679b923f807b73bf1da9305b064f5152
+      size: 3567
     - path: throughput/FP16/throughput_results.json
       hash: md5
-      md5: ffb923b79fea9549c0c6bf3bc6fea79b
-      size: 1629
+      md5: 264b5682c8636b13cd9edd1daee08167
+      size: 1624
     - path: throughput/FP16/throughput_results_2.json
       hash: md5
-      md5: ffb923b79fea9549c0c6bf3bc6fea79b
-      size: 1629
+      md5: 264b5682c8636b13cd9edd1daee08167
+      size: 1624
   quantize_tensorrt_INT8:
     cmd: python quantize_tensorrt.py
     deps:

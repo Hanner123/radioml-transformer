@@ -38,21 +38,3 @@ export_onnx_qcdq(model, dummy_input, export_path="outputs/model_brevitas.onnx")
 
 print("Quantisiertes Modell erfolgreich exportiert!")
 
-
-# Optional: Symmetrische Quantisierung sicherstellen
-# (Brevitas verwendet standardmäßig symmetrische Quantisierung, wenn signed=True)
-# Falls du explizit symmetrische Quantizer erzwingen willst, kannst du die Quantizer wie folgt anpassen:
-# (Hier ein Beispiel für einen symmetrischen Weight-Quantizer)
-# from brevitas.quant.base import NarrowIntQuant, MaxStatsScaling
-# from brevitas.quant.solver import WeightQuantSolver
-# from brevitas.inject.enum import RestrictValueType
-
-# class SymmetricWeightQuantizer(NarrowIntQuant, MaxStatsScaling, WeightQuantSolver):
-#     bit_width = 8
-#     signed = True
-#     scaling_per_output_channel = False
-#     restrict_scaling_type = RestrictValueType.FP
-#     # Symmetrisch: zero_point = 0 (Standard bei Brevitas für signed=True)
-
-# Du kannst diesen Quantizer in deinem Modell verwenden, falls du eigene Layer baust.
-# In deinem Modell ist das aber bereits so umgesetzt!

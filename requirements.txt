@@ -1,4 +1,4 @@
-brevitas @ git+https://github.com/iksnagreb/brevitas.git@003f9f4070c20639790c7b406a28612a089fc502 # andere Version für brevitas quant nötig!!
+brevitas @ git+https://github.com/iksnagreb/brevitas.git@003f9f4070c20639790c7b406a28612a089fc502 # andere Version für brevitas quant nötig!! 0.12.0
 qonnx @ git+https://github.com/iksnagreb/qonnx.git@4b731dbf3120316f11ae1c4b298ceaf9e73f21b3
 finn @ git+https://github.com/eki-project/finn-plus.git@affcbb12a57caa96fb00f0ec9bd6f696279752c2
 numpy~=1.26.4
@@ -15,3 +15,4 @@ scikit-learn~=1.5.2
 tensorrt==10.10.0.31
 pycuda
 onnxconverter_common
+optimum

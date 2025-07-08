@@ -59,26 +59,24 @@ def export(model, dataset, **kwargs):  # noqa: Shadows model
     print(f"Modell als ONNX exportiert: {onnx_path}")
 
 
-    # Brevitas 8Bit export
+    # Brevitas 8Bit export - problem: nicht möglich mit dynamischen batch-sizes, 
+    # wenn man es im nachinein patched sind die reshapes noch statisch -> funktioniert nicht mit tensorrt
     data_path = "data/GOLD_XYZ_OSC.0001_1024.npz"
     data = np.load(data_path)
     key_list = list(data.keys())
-    print(key_list[0])
     X = data[key_list[0]]  
-    dummy_input = torch.randn(1, *X.shape[1:], dtype=torch.float32)
-    from brevitas.export import export_onnx_qcdq
-    export_onnx_qcdq(
-        model, 
-        dummy_input, 
-        export_path="outputs/model_brevitas.onnx")
-    print("Quantisiertes Modell erfolgreich exportiert!")
-    model = onnx.load("outputs/model_brevitas.onnx")
-    # Setze die erste Dimension (Batch) auf dynamisch
-    model.graph.input[0].type.tensor_type.shape.dim[0].dim_param = "batch_size"
-    # Optional: Auch für Output
-    model.graph.output[0].type.tensor_type.shape.dim[0].dim_param = "batch_size"
-    # Speichern
-    onnx.save(model, "outputs/model_brevitas_dynamic.onnx")
+    for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]:
+        dummy_input = torch.randn(batch_size, *X.shape[1:], dtype=torch.float32)
+        from brevitas.export import export_onnx_qcdq
+        export_path=f"outputs/model_brevitas_{batch_size}.onnx"
+        export_onnx_qcdq(
+            model, 
+            dummy_input, 
+            export_path=export_path,
+            opset_version=17
+        )
+        print(f"Quantisiertes Modell erfolgreich exportiert für Batch-Größe: {batch_size}")
+
 
     # brevitas ergänzen + dynamic axes
     # jetson, 4bit möglich- wahrscheinlich schon
@@ -137,7 +135,7 @@ if __name__ == "__main__":
     # Create a new model instance according to the configuration
     model = get_model(**params["model"])
     # Load the trained model parameters
-    model.load_state_dict(torch.load("outputs/model.pt", map_location="cpu"))
+    model.load_state_dict(torch.load("outputs/model.pt", map_location="cpu", weights_only=True))
     # Prevent export issue for missing affine normalization parameters
     model = patch_non_affine_norms(model)
     # Pass the model and the export configuration to the evaluation loop

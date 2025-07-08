@@ -16,6 +16,8 @@ import yaml
 from onnxconverter_common import float16 # zu requirements hinzufügen
 import onnxruntime as ort
 
+import model
+
 # tensorrt, datasets(hugging face), pycuda
 FP16 = os.environ.get("FP16", "0") == "1"
 INT8 = os.environ.get("INT8", "0") == "1"
@@ -68,6 +70,7 @@ def parse_shape(shape, batch_value):
     """Ersetzt 'batch_size' durch batch_value in der shape-Liste."""
     return tuple(
         batch_value if d == "batch_size"
+        else batch_value if (d == 1 and INT8)
         else 128 if d == "sequence_length"
         else d
         for d in shape
@@ -281,6 +284,10 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info=N
     :param logger: TensorRT-Logger.
     :return: TensorRT-Engine und Execution Context.
     """
+    if INT8:
+        min_bs = batch_size
+        opt_bs = batch_size
+        max_bs = batch_size
     logger = trt.Logger(trt.Logger.WARNING)
     builder = trt.Builder(logger)
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
@@ -302,6 +309,8 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info=N
         config.set_flag(trt.BuilderFlag.INT8)
 
     profile = builder.create_optimization_profile()
+
+    model = onnx.load("outputs/model_brevitas_2.onnx")
 
     for inp in input_info:
         name = inp["name"]
@@ -439,6 +448,8 @@ def calculate_latency_and_throughput(batch_sizes, onnx_model_path, input_info, o
     latency_log_batch = []
 
     for batch_size in batch_sizes:
+        if INT8:
+            onnx_model_path=f"outputs/model_brevitas_{batch_size}.onnx"
         test_loader = create_test_dataloader(data_path, batch_size) 
         engine, context = build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info)
         device_input, device_output, device_attention_mask, device_token_type, stream_ptr, torch_stream = test_data(context, batch_size, input_info, output_info)
@@ -528,8 +539,7 @@ if __name__ == "__main__":
     batch_sizes = [1, 2, 4, 8 , 16, 32, 64, 128, 256, 512, 1024]  
 
     if INT8:
-        onnx_model_path = "outputs/model_brevitas_dynamic.onnx" # gibt da noch einen Fehler
-        # onnx_model_path = "outputs/model_brevitas.onnx" # funktioniert mit batch size 1, aber nicht mit batch size 2
+        onnx_model_path = "outputs/model_brevitas_1.onnx" 
 
 
 

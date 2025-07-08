@@ -544,9 +544,8 @@ if __name__ == "__main__":
 
 
     model = onnx.load(onnx_model_path)
-    # funktioniert bei radioml, hier auch
-    if FP16:
-        model = float16.convert_float_to_float16(model) 
+    # if FP16:
+    #     model = float16.convert_float_to_float16(model) 
 
     input_info, output_info = get_model_io_info(onnx_model_path)
 
@@ -606,7 +605,7 @@ if __name__ == "__main__":
 # christoph schreiben - er schickt mir andere models zum testen - fertig
 # auch int 8 generalisieren - fertig
 
-# int 8 radioml testen
+# int 8 radioml testen 
 
 # mit jetson testen (gleiche zugangsdaten wie pc)
 

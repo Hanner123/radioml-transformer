@@ -78,7 +78,6 @@ def export(model, dataset, **kwargs):  # noqa: Shadows model
         print(f"Quantisiertes Modell erfolgreich exportiert für Batch-Größe: {batch_size}")
 
 
-    # brevitas ergänzen + dynamic axes
     # jetson, 4bit möglich- wahrscheinlich schon
     # zwei neue kapitel paper
 

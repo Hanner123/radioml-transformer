@@ -38,3 +38,5 @@ export_onnx_qcdq(model, dummy_input, export_path="outputs/model_brevitas.onnx")
 
 print("Quantisiertes Modell erfolgreich exportiert!")
 
+print("Dynamische Batch sizes:")
+

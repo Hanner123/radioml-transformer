@@ -22,5 +22,5 @@ transformers[torch]
 datasets==3.5.1
 torch==2.6.0
 tqdm==4.67.1
-onnxconverter_common==1.14.0
+onnxconverter_common
 evaluate

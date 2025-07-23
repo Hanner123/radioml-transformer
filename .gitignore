@@ -2,6 +2,7 @@
 .idea/
 # Local python environment
 .venv/
+venv/
 # Exported ONNX models
 *.onnx
 # Python cache

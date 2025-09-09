@@ -72,6 +72,7 @@ def parse_shape(shape, batch_value):
         batch_value if d == "batch_size"
         else batch_value if (d == 1 and INT8)
         else 128 if d == "sequence_length"
+        else 64 if d == "Muloutput_dim_2"
         else d
         for d in shape
     )
@@ -102,7 +103,10 @@ def get_model_io_info(model_path):
     Liest Input- und Output-Infos aus einem ONNX-Modell.
     Gibt Listen von Dictionaries mit Name, Shape und Dtype zurück.
     """
-    session = ort.InferenceSession(model_path)
+    sess_options = ort.SessionOptions()
+
+    sess_options.intra_op_num_threads = 8
+    session = ort.InferenceSession(model_path, sess_options)
     input_info = [
         {
             "name": inp.name,
@@ -256,6 +260,7 @@ def test_data(context, batch_size, input_info, output_info):
     for out in output_info:
         name = out["name"]
         shape = parse_shape(out["shape"], batch_size)
+        print(shape)
         dtype = onnx_dtype_to_torch(out["dtype"])  # ONNX-Datentyp in PyTorch-Datentyp umwandeln
         tensor = torch.empty(shape, dtype=dtype_out, device='cuda')
         context.set_tensor_address(name, tensor.data_ptr())
@@ -396,6 +401,7 @@ def run_inference(context, test_loader, device_input, device_output, device_atte
         except Exception as e:
             print("TensorRT Error:", e)
         torch_stream.synchronize() 
+    
         end_time = time.time()
 
         output = device_output.cpu().numpy()
@@ -460,8 +466,8 @@ def calculate_latency_and_throughput(batch_sizes, onnx_model_path, input_info, o
         latency_synchronize_sum = 0
         lantency_datatransfer_sum = 0
         total_time_sum = 0
-        num_executions = 10.0
-        for i in range(int(num_executions)):
+        num_executions = 10
+        for i in range(num_executions):
             start_time = time.time()
             latency_ms, latency_synchronize, latency_datatransfer, _ = run_inference(
                 context=context,

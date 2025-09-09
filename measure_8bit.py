@@ -325,16 +325,7 @@ def run_inference(batch_size=1):
     # del device_input, device_output, stream_ptr, torch_stream, engine, context
     return correct_predictions, total_predictions
 
-# Montag:
-# richtiges modell verwenden/an passender Stelle exportieren - funkioniert nicht, schon in model.py sind nodes die tensorrt nicht versteht
-# erstmal eigenes, ähnliches modell verwenden. die outputs und inputs sind aber gleich
-# in pipeline einbauen - gemacht
-# grafiken erstellen - gemacht
 
-
-# Dienstag:
-# FP 16 testen - gemacht, aber kein unterschied zu FP 32 (etwas schlechter), [06/17/2025-12:29:42] [TRT] [E] IExecutionContext::enqueueV3: Error Code 1: Cuda Runtime (invalid resource handle)
-# quantisiertes modell messen, testen, ähnlicheres modell verwenden
 dtype = torch.float32
 
 if __name__ == "__main__":
@@ -346,7 +337,7 @@ if __name__ == "__main__":
 
     context=0
     correct_predictions, total_predictions = run_inference(batch_size=1)  # Teste Inferenz mit Batch Size 1
-    print(f"Accuracy : {correct_predictions / total_predictions:.2%}")
+    print(f"Accuracy : {correct_predictions / total_predictions:.2%}") # angeblich 100%, total_predictions ist nicht null! Vielleicht auswendig gelernt weil kleines Dataset - aber wieso mit anderen Quantisierungen nicht 100%?
 
     accuracy_result = {
         "quantisation_type": "INT8 TensorRT",

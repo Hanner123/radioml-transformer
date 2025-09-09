@@ -9,8 +9,8 @@ stages:
       size: 31671
     - path: data/GOLD_XYZ_OSC.0001_1024.hdf5
       hash: md5
-      md5: 13c38751da99a2739fdc04029a86b8e9
-      size: 21449148312
+      md5: 337cd516632d1d62cf2086b14e415f42
+      size: 1072457688
     - path: dataset.py
       hash: md5
       md5: 098d3a3ea30571b048605c4de0818496
@@ -99,16 +99,16 @@ stages:
     outs:
     - path: loss.yaml
       hash: md5
-      md5: 6da8f2c5aec97f30509f13e2b144b042
-      size: 61
+      md5: 4ab7255905b49aac7f3fa6fc2e085447
+      size: 65
     - path: outputs/model.pt
       hash: md5
-      md5: 4c686cab4e6d785ed28d5d2ffa5ba68a
-      size: 1064590
+      md5: c35f80fe98a3d018db3c3903aaefd020
+      size: 1020878
     - path: outputs/optimizer.pt
       hash: md5
-      md5: 795a745123ad6930bf119a4f5f8ae832
-      size: 1540346
+      md5: 254f608d037ac73ff0da99d59983069a
+      size: 1539002
   eval:
     cmd: python -m eval
     deps:
@@ -118,8 +118,8 @@ stages:
       size: 31671
     - path: data/GOLD_XYZ_OSC.0001_1024.hdf5
       hash: md5
-      md5: 13c38751da99a2739fdc04029a86b8e9
-      size: 21449148312
+      md5: 337cd516632d1d62cf2086b14e415f42
+      size: 1072457688
     - path: dataset.py
       hash: md5
       md5: 098d3a3ea30571b048605c4de0818496
@@ -134,8 +134,8 @@ stages:
       size: 59846
     - path: outputs/model.pt
       hash: md5
-      md5: 4c686cab4e6d785ed28d5d2ffa5ba68a
-      size: 1064590
+      md5: c35f80fe98a3d018db3c3903aaefd020
+      size: 1020878
     params:
       params.yaml:
         dataset:
@@ -192,16 +192,16 @@ stages:
     outs:
     - path: accuracy-per-snr.yaml
       hash: md5
-      md5: 2893188ba6f8d72368c0b41ed4f46c7a
-      size: 698
+      md5: 264a34e7df9c96ed8b5e8ecb4d236604
+      size: 412
     - path: accuracy.yaml
       hash: md5
-      md5: 5aa5660f877d5ce3f8d0cf86ce470d65
-      size: 29
+      md5: 1853f43ec8a7eee8d22c28cf27364a59
+      size: 14
     - path: classes.csv
       hash: md5
-      md5: ff8dcb76314e0f64a6ed6dd6d9987a3f
-      size: 957328
+      md5: 01e0c8447e7f94d7499faddedb96fdca
+      size: 31147
   export:
     cmd: python -m export
     deps:
@@ -211,8 +211,8 @@ stages:
       size: 31671
     - path: data/GOLD_XYZ_OSC.0001_1024.hdf5
       hash: md5
-      md5: 13c38751da99a2739fdc04029a86b8e9
-      size: 21449148312
+      md5: 337cd516632d1d62cf2086b14e415f42
+      size: 1072457688
     - path: dataset.py
       hash: md5
       md5: 098d3a3ea30571b048605c4de0818496
@@ -227,8 +227,8 @@ stages:
       size: 59846
     - path: outputs/model.pt
       hash: md5
-      md5: 4c686cab4e6d785ed28d5d2ffa5ba68a
-      size: 1064590
+      md5: c35f80fe98a3d018db3c3903aaefd020
+      size: 1020878
     params:
       params.yaml:
         dataset:
@@ -282,19 +282,19 @@ stages:
     outs:
     - path: outputs/inp.npy
       hash: md5
-      md5: 6c2d27154ce5742857957445779bbe44
+      md5: 83078f44d804fc0ad172a69ef60b426d
       size: 8320
     - path: outputs/model.onnx
       hash: md5
-      md5: 1ee2ac3943ec32a3e0d608231f70688d
-      size: 860168
+      md5: 0623ae0acc6d9aaf18a22e745964d10c
+      size: 860271
     - path: outputs/model_measuring.onnx
       hash: md5
-      md5: 4abc1a9bc98f399c4ae011c1a6badd99
-      size: 2191440
+      md5: 78bf8a9824139cb62ee266e0c4413dc8
+      size: 2191407
     - path: outputs/out.npy
       hash: md5
-      md5: c487008f03d4643d6cc50b77bdd22424
+      md5: e843b128e6e065b64c8a2b5ab5219bdf
       size: 3200
   build:
     cmd: bash run.sh '$FINN/run-docker.sh build_custom $(pwd)'
@@ -432,7 +432,7 @@ stages:
     outs:
     - path: outputs/model_nonquantized.onnx
       hash: md5
-      md5: 31115226968caf795f71b44bf4073ba0
+      md5: 881a066c64574203b9b18198c2296786
       size: 466302
   measure:
     cmd: python -m measure_untrained
@@ -475,33 +475,33 @@ stages:
       size: 3972
     - path: measure_general.py
       hash: md5
-      md5: d6ad5bc9753e32d0947d23d7e482527f
-      size: 23808
+      md5: 2f7c60750e1ae53c72463d2554145828
+      size: 23966
     - path: outputs/model_measuring.onnx
       hash: md5
-      md5: 1ea0f5bcd722363c91c26fbcb2e9ac6a
-      size: 2270345
+      md5: 78bf8a9824139cb62ee266e0c4413dc8
+      size: 2191407
     - path: outputs/model_nonquantized.onnx
       hash: md5
-      md5: 31115226968caf795f71b44bf4073ba0
+      md5: 881a066c64574203b9b18198c2296786
       size: 466302
     outs:
     - path: throughput/FP32/latency_results.json
       hash: md5
-      md5: 3d54529647fe6485fa047089f3c59663
-      size: 3602
+      md5: 038b336d165dd530adc419de2c8cc853
+      size: 3566
     - path: throughput/FP32/latency_results_batch.json
       hash: md5
-      md5: 41a512ef785384ef01555772059fbc9c
-      size: 3567
+      md5: 80855fe3c6effbc903ee97561ab950e4
+      size: 3529
     - path: throughput/FP32/throughput_results.json
       hash: md5
-      md5: 2466d6457fc5a9d489b95ea41791ef80
-      size: 1630
+      md5: d8ad99e4739ef1bf79cbebd473ff9eec
+      size: 1626
     - path: throughput/FP32/throughput_results_2.json
       hash: md5
-      md5: 2466d6457fc5a9d489b95ea41791ef80
-      size: 1630
+      md5: d8ad99e4739ef1bf79cbebd473ff9eec
+      size: 1626
   measure_16FP:
     cmd: FP16=1 python measure_general.py
     deps:
@@ -511,35 +511,35 @@ stages:
       size: 3972
     - path: measure_general.py
       hash: md5
-      md5: d6ad5bc9753e32d0947d23d7e482527f
-      size: 23808
+      md5: 2f7c60750e1ae53c72463d2554145828
+      size: 23966
     - path: outputs/model_nonquantized.onnx
       hash: md5
-      md5: 31115226968caf795f71b44bf4073ba0
+      md5: 881a066c64574203b9b18198c2296786
       size: 466302
     outs:
     - path: throughput/FP16/latency_results.json
       hash: md5
-      md5: 446456109520c7cbb9b0ed4e1dd015e2
-      size: 3602
+      md5: 094b66d6b38e55c34ac6c2d3c1173413
+      size: 3568
     - path: throughput/FP16/latency_results_batch.json
       hash: md5
-      md5: 792850ad1af4ff3f1b073e34394742c4
-      size: 3566
+      md5: 5456c8b16b38fa4f10283da4eee0fe8d
+      size: 3532
     - path: throughput/FP16/throughput_results.json
       hash: md5
-      md5: 34ff4083d951d21cfe0b6257b0fa12b6
-      size: 1629
+      md5: 9126064000b73afbfe8c01b3e8e811f6
+      size: 1631
     - path: throughput/FP16/throughput_results_2.json
       hash: md5
-      md5: 34ff4083d951d21cfe0b6257b0fa12b6
-      size: 1629
+      md5: 9126064000b73afbfe8c01b3e8e811f6
+      size: 1631
   quantize_tensorrt_INT8:
     cmd: python quantize_tensorrt.py
     deps:
     - path: outputs/model_nonquantized.onnx
       hash: md5
-      md5: 31115226968caf795f71b44bf4073ba0
+      md5: 881a066c64574203b9b18198c2296786
       size: 466302
     - path: quantize_tensorrt.py
       hash: md5
@@ -548,20 +548,20 @@ stages:
     outs:
     - path: outputs/engines
       hash: md5
-      md5: 75001b2bface54d2be84f917443db8ff.dir
-      size: 51980692
+      md5: b1a5a971dcbf9e82287d6b4a32c4724c.dir
+      size: 35459564
       nfiles: 11
   measure_INT8_tensorrt:
     cmd: python measure_8bit.py
     deps:
     - path: measure_8bit.py
       hash: md5
-      md5: 156854e2a9414eea4a347caa4b7efc57
-      size: 15665
+      md5: 72d3e31f93c217da65c50ff208bbb394
+      size: 15245
     - path: outputs/engines
       hash: md5
-      md5: 75001b2bface54d2be84f917443db8ff.dir
-      size: 51980692
+      md5: b1a5a971dcbf9e82287d6b4a32c4724c.dir
+      size: 35459564
       nfiles: 11
     - path: plot_templates/bar_1_INT8_tensorrt.json
       hash: md5
@@ -582,35 +582,31 @@ stages:
     outs:
     - path: eval_results/accuracy_INT8_tensorrt.json
       hash: md5
-      md5: d1ecae79fe2aa676f97347da28f84e53
-      size: 70
+      md5: 06dfde095ad808a247590a030417a6fc
+      size: 62
     - path: throughput/INT8_tensorrt/latency_results.json
       hash: md5
-      md5: 556c49007df00c474479057b2029c30d
-      size: 3599
+      md5: 1c93c72c13c7662ee1a33f01bb38bcf8
+      size: 3568
     - path: throughput/INT8_tensorrt/latency_results_batch.json
       hash: md5
-      md5: 9ae9905802cb4eea1d64fa39b50d5aec
-      size: 3556
+      md5: b4e6ec861ea82f9477b5b69e169d35ad
+      size: 3523
     - path: throughput/INT8_tensorrt/throughput_results.json
       hash: md5
-      md5: 495434587d727519dd021bba201fc388
-      size: 1633
+      md5: 32b8361c6cce8dae241d324932aa12f0
+      size: 1631
     - path: throughput/INT8_tensorrt/throughput_results_2.json
       hash: md5
-      md5: 495434587d727519dd021bba201fc388
-      size: 1633
+      md5: 32b8361c6cce8dae241d324932aa12f0
+      size: 1631
   measure_INT8_brevitas:
     cmd: INT8=1 python measure_general.py
     deps:
     - path: measure_general.py
       hash: md5
-      md5: d6ad5bc9753e32d0947d23d7e482527f
-      size: 23808
-    - path: outputs/model_brevitas_dynamic.onnx
-      hash: md5
-      md5: 9e7f09b7883ed4e900daf879fd4fc180
-      size: 300222
+      md5: 2f7c60750e1ae53c72463d2554145828
+      size: 23966
     - path: plot_templates/bar_1_INT8.json
       hash: md5
       md5: 0f3387ecb936bbbce88fc30f93f52b52
@@ -630,21 +626,21 @@ stages:
     outs:
     - path: eval_results/accuracy_INT8.json
       hash: md5
-      md5: 013aaeb73b7d4469208502b328a88f24
-      size: 61
+      md5: 082cce2db7f46651f364d6d6755aff4e
+      size: 53
     - path: throughput/INT8/latency_results.json
       hash: md5
-      md5: 0a9820d1757e197f4046f4f7259e37ae
-      size: 3600
+      md5: e19f94a840b2bcb20f8139da7b031374
+      size: 3572
     - path: throughput/INT8/latency_results_batch.json
       hash: md5
-      md5: b03f2f22910f5b7d48038ec8569f284e
-      size: 3562
+      md5: 0bbcf7e216c2276c20b9c43283215a35
+      size: 3532
     - path: throughput/INT8/throughput_results.json
       hash: md5
-      md5: 0612c1efcf9fd7d1e06a89abf574219c
-      size: 1626
+      md5: 0c5e2a2dd4a871d446263395f107a8e9
+      size: 1630
     - path: throughput/INT8/throughput_results_2.json
       hash: md5
-      md5: 0612c1efcf9fd7d1e06a89abf574219c
-      size: 1626
+      md5: 0c5e2a2dd4a871d446263395f107a8e9
+      size: 1630

@@ -237,7 +237,6 @@ stages:
       - plot_templates/bar_2_INT8.json
       - plot_templates/bar_3_INT8.json
       - plot_templates/bar_4_INT8.json
-      - outputs/model_brevitas_dynamic.onnx
     outs:
       - eval_results/accuracy_INT8.json
     plots:

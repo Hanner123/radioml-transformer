@@ -186,34 +186,34 @@ def create_test_dataloader(data_path, batch_size):
     return test_loader
 # Spezifisch für den Datensatz und das Modell!
 # numpy array als allgemeine form!! Einrichten
-def create_test_dataloader_radiollm(data_path, batch_size, seq_len=32, emb_dim=64):
-    import h5py
-    import numpy as np
-    from torch.utils.data import TensorDataset, DataLoader
+# def create_test_dataloader_radiollm(data_path, batch_size, seq_len=32, emb_dim=64):
+#     import h5py
+#     import numpy as np
+#     from torch.utils.data import TensorDataset, DataLoader
 
-    with h5py.File(data_path, "r") as f:
-        X = np.array(f["X"][:10000])  # Nur die ersten 1000 Datensätze
-        Y = np.array(f["Y"][:10000])
+#     with h5py.File(data_path, "r") as f:
+#         X = np.array(f["X"][:10000])  # Nur die ersten 1000 Datensätze
+#         Y = np.array(f["Y"][:10000])
 
-    X = X.reshape(X.shape[0], -1)           # [samples, 2048]
-    X = X.reshape(-1, seq_len, emb_dim)     # [samples', 32, 64]
+#     X = X.reshape(X.shape[0], -1)           # [samples, 2048]
+#     X = X.reshape(-1, seq_len, emb_dim)     # [samples', 32, 64]
 
-    # Labels ggf. anpassen (z.B. argmax, expand, ... wie im Training)
-    if Y.ndim == 2 and Y.shape[1] > 1:
-        Y = np.argmax(Y, axis=1)
-    Y = np.tile(Y[:, None], (1, seq_len))   
+#     # Labels ggf. anpassen (z.B. argmax, expand, ... wie im Training)
+#     if Y.ndim == 2 and Y.shape[1] > 1:
+#         Y = np.argmax(Y, axis=1)
+#     Y = np.tile(Y[:, None], (1, seq_len))   
 
-    X = torch.tensor(X, dtype=dtype) 
-    Y = torch.tensor(Y, dtype=torch.long)
-    test_dataset = TensorDataset(X, Y)
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        pin_memory=True,
-        drop_last=True
-    )
-    return test_loader
+#     X = torch.tensor(X, dtype=dtype) 
+#     Y = torch.tensor(Y, dtype=torch.long)
+#     test_dataset = TensorDataset(X, Y)
+#     test_loader = DataLoader(
+#         test_dataset,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         pin_memory=True,
+#         drop_last=True
+#     )
+#     return test_loader
 
 
 def test_data(context, batch_size, input_info, output_info):
@@ -293,6 +293,7 @@ def build_tensorrt_engine(onnx_model_path, test_loader, batch_size, input_info=N
         min_bs = batch_size
         opt_bs = batch_size
         max_bs = batch_size
+        
     logger = trt.Logger(trt.Logger.WARNING)
     builder = trt.Builder(logger)
     network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))

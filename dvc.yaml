@@ -274,5 +274,26 @@ stages:
          x: quantisation_type
          y: value
          cache: false
+  energy_measure:
+    cmd: python energy_tegrastats.py
+    deps:
+      - energy_tegrastats.py
+      - parse_tegrastats_to_json.py
+    outs:
+      - energy_metrics/tegrastats.log
+      - energy_metrics/energy_metrics.json
+      - energy_metrics/ram_metrics_2.json
+      - energy_metrics/energy_consumption_2.json
+    plots:
+     -  energy_metrics/ram_metrics.json:
+          template: plot_templates/ram_used.json
+          x: timestamp
+          y: ram_used
+          cache: false
+     -  energy_metrics/energy_consumption.json:
+          template: plot_templates/energy_consumption.json
+          x: timestamp
+          y: value
+          cache: false
 
   

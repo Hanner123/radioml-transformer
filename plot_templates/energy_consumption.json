@@ -1,0 +1,30 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Energy Consumption Over Time (mW)",
+  "data": {
+    "values": "<DVC_METRIC_DATA>"
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "field": "timestamp",
+      "type": "temporal",
+      "title": "Timestamp"
+    },
+    "y": {
+      "aggregate": "sum",
+      "field": "value",
+      "type": "quantitative",
+      "title": "Power (mW)"
+    },
+    "color": {
+      "field": "type",
+      "type": "nominal",
+      "scale": {
+        "domain": ["vdd_gpu_soc", "vdd_cpu_cv", "vin_sys_5v0"],
+        "range": ["#1f77b4", "#ff7f0e", "#2ca02c"]
+      },
+      "title": "Energy Source"
+    }
+  }
+}

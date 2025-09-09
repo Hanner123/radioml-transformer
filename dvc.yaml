@@ -260,5 +260,19 @@ stages:
          x: batch_size
          y: value
          cache: false
+  accuracy_comparison:
+    cmd: python accuracy_comparison.py
+    deps:
+      - accuracy_comparison.py
+      - eval_results/accuracy_FP32.json
+      - eval_results/accuracy_FP16.json
+      - eval_results/accuracy_INT8.json
+      - eval_results/accuracy_INT8_tensorrt.json
+    plots:
+     -  eval_results/accuracy.json:
+         template: plot_templates/bar_accuracy.json
+         x: quantisation_type
+         y: value
+         cache: false
 
   

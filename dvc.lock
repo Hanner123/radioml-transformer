@@ -644,3 +644,31 @@ stages:
       hash: md5
       md5: 0c5e2a2dd4a871d446263395f107a8e9
       size: 1630
+  accuracy_comparison:
+    cmd: python accuracy_comparison.py
+    deps:
+    - path: accuracy_comparison.py
+      hash: md5
+      md5: 38f27de2c22916c3de80d7125fed15f5
+      size: 871
+    - path: eval_results/accuracy_FP16.json
+      hash: md5
+      md5: f4ce42e4960c46c75601659d83a5bc82
+      size: 61
+    - path: eval_results/accuracy_FP32.json
+      hash: md5
+      md5: dab712b73169f8097f2594e03013ba5b
+      size: 61
+    - path: eval_results/accuracy_INT8.json
+      hash: md5
+      md5: 082cce2db7f46651f364d6d6755aff4e
+      size: 53
+    - path: eval_results/accuracy_INT8_tensorrt.json
+      hash: md5
+      md5: 06dfde095ad808a247590a030417a6fc
+      size: 62
+    outs:
+    - path: eval_results/accuracy.json
+      hash: md5
+      md5: 48442a98e8232a21a73c9974512eb0db
+      size: 311
